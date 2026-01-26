@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "./build",
+    "target": "es2022",
+    "module": "es2022",
+    "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "esModuleInterop": true,
+    "strict": true,
+    "allowJs": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "noEmit": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "paths": {
+      "src/*": ["./src/*"],
+      "@toneflix/grithub": ["./src/index.ts"],
+      "@toneflix/grithub/*": ["./src/*"]
+    }
+  },
+  "include": ["./**/*.d.ts", "./github/*", "./test/*", "./src/*"],
+  "exclude": ["./build", "/.node_modules"]
+}
