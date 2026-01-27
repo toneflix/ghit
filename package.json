@@ -1,7 +1,7 @@
 {
     "name": "@toneflix/grithub",
     "type": "module",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "description": "Command-line toolkit that blends hand-crafted workflows with OpenAPI-generated commands for GitHub.",
     "main": "bin/cli.js",
     "private": false,
