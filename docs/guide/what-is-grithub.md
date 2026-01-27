@@ -79,7 +79,7 @@ Features:
 
 Create dozens of issues from markdown files:
 
-```
+```md
 issues/
 ├── 001-feature-a.md
 ├── 002-feature-b.md
@@ -224,48 +224,48 @@ grithub issues:update .github/issues
 
 ### Architecture
 
-```
+```md
 Grithub CLI
 ├── Built-in Commands (TypeScript)
-│   ├── login / logout
-│   ├── config
-│   ├── issues (interactive)
-│   ├── issues:seed
-│   ├── issues:update
-│   └── issues:delete
+│ ├── login / logout
+│ ├── config
+│ ├── issues (interactive)
+│ ├── issues:seed
+│ ├── issues:update
+│ └── issues:delete
 │
 ├── Generated Commands (Runtime)
-│   ├── Parsed from GitHub OpenAPI spec
-│   ├── Generated once, loaded on startup
-│   └── Covers entire GitHub REST API
+│ ├── Parsed from GitHub OpenAPI spec
+│ ├── Generated once, loaded on startup
+│ └── Covers entire GitHub REST API
 │
 ├── Authentication Layer
-│   ├── OAuth flow
-│   ├── Token storage (SQLite)
-│   └── Automatic token injection
+│ ├── OAuth flow
+│ ├── Token storage (SQLite)
+│ └── Automatic token injection
 │
 └── Configuration
-    ├── Default repository
-    ├── API settings
-    └── User preferences
+├── Default repository
+├── API settings
+└── User preferences
 ```
 
 ### Data Flow
 
 1. **Authentication**
 
-   ```
+   ```md
    User → Browser OAuth → GitHub → Token → SQLite DB
    ```
 
 2. **Command Execution**
 
-   ```
+   ```md
    Command → Load Config → Inject Token → GitHub API → Response → Display
    ```
 
 3. **Bulk Operations**
-   ```
+   ```md
    Markdown Files → Parse Frontmatter → Diff Against GitHub → Update Changed → Report
    ```
 

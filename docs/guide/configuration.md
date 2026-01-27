@@ -293,7 +293,7 @@ Environment variables take precedence over database configuration.
 
 All configuration is stored in SQLite:
 
-```
+```md
 ~/.grithub/
 └── app.db
 ```

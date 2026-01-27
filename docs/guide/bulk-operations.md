@@ -19,7 +19,7 @@ Create multiple issues from a directory of markdown files.
 
 Organize your issues in a directory:
 
-```
+```md
 issues/
 ├── 001-setup-ci-pipeline.md
 ├── 002-add-unit-tests.md
@@ -80,7 +80,7 @@ grithub issues:seed ./issues --repo owner/repository
 
 ### Example Output
 
-```
+```md
 ✓ Creating issue 1/5: Setup CI Pipeline
 ✓ Creating issue 2/5: Add Unit Tests
 ✓ Creating issue 3/5: Update Documentation
@@ -149,7 +149,7 @@ grithub issues:update ./issues
    ```
 
 4. Only modified issues are updated:
-   ```
+   ```md
    ✓ Issue #1 updated (title, labels, body changed)
    ⊘ Issue #2 skipped (no changes)
    ✓ Issue #3 updated (body changed)
@@ -179,11 +179,11 @@ The command will:
 
 ### Example Output
 
-```
+```md
 ✔ 2 issues fetched successfully.
 ? Select Issue
 ❯◯ #27: 🟢 Define database schema and create Prisma models for all entities
- ◯ #26: 🟢 Initialize API with Next.js API routes, food and database.
+◯ #26: 🟢 Initialize API with Next.js API routes, food and database.
 
 ↑↓ navigate • space select • a all • i invert • ⏎ submit
 ```
@@ -205,17 +205,17 @@ Track your issues in Git for better collaboration and history.
 
 ### Repository Structure
 
-```
+```md
 project/
 ├── .git/
 ├── .gitignore
 ├── src/
 ├── docs/
 └── .github/
-    └── issues/
-        ├── 001-feature-a.md
-        ├── 002-feature-b.md
-        └── 003-bug-fix.md
+└── issues/
+├── 001-feature-a.md
+├── 002-feature-b.md
+└── 003-bug-fix.md
 ```
 
 ### Workflow
@@ -262,7 +262,7 @@ project/
 
 Use numeric prefixes for ordering:
 
-```
+```md
 001-first-issue.md
 002-second-issue.md
 ...
@@ -563,14 +563,14 @@ For 100+ issues:
 
 Keep directories focused:
 
-```
+```md
 issues/
 ├── features/
-│   └── *.md
+│ └── _.md
 ├── bugs/
-│   └── *.md
+│ └── _.md
 └── enhancements/
-    └── *.md
+└── \*.md
 ```
 
 Seed by category:

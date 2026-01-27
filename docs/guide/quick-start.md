@@ -54,7 +54,7 @@ grithub issues:create --title "Bug found" --body "Description"
 
 Create a directory with markdown files (one per issue):
 
-```
+```md
 issues/
 ├── 001-setup-ci.md
 ├── 002-add-tests.md

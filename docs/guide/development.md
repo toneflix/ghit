@@ -41,26 +41,26 @@ This installs:
 
 ### Project Structure
 
-```
+```md
 grithub/
-├── src/                    # Source code
-│   ├── Commands/          # Command implementations
-│   ├── Contracts/         # TypeScript interfaces
-│   ├── github/            # GitHub API utilities
-│   ├── utils/             # Helper functions
-│   ├── cli.ts            # CLI entry point
-│   ├── config.ts         # Configuration
-│   └── db.ts             # Database operations
+├── src/ # Source code
+│ ├── Commands/ # Command implementations
+│ ├── Contracts/ # TypeScript interfaces
+│ ├── github/ # GitHub API utilities
+│ ├── utils/ # Helper functions
+│ ├── cli.ts # CLI entry point
+│ ├── config.ts # Configuration
+│ └── db.ts # Database operations
 │
-├── tests/                 # Test files
-├── docs/                  # VitePress documentation
-├── bin/                   # Compiled executables
-├── build/                 # Build output
+├── tests/ # Test files
+├── docs/ # VitePress documentation
+├── bin/ # Compiled executables
+├── build/ # Build output
 │
-├── package.json           # Package configuration
-├── tsconfig.json         # TypeScript config
-├── tsdown.config.ts      # Build configuration
-└── vitest.config.ts      # Test configuration
+├── package.json # Package configuration
+├── tsconfig.json # TypeScript config
+├── tsdown.config.ts # Build configuration
+└── vitest.config.ts # Test configuration
 ```
 
 ### Run in Development
@@ -227,7 +227,7 @@ pnpm runner example John --greeting="Hi"
 
 ### Database Location
 
-```
+```md
 ~/.grithub/app.db
 ```
 
