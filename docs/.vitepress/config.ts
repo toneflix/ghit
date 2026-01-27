@@ -23,6 +23,8 @@ export default defineConfig({
         ['meta', { name: 'twitter:title', content: '@toneflix/grithub' }],
         ['meta', { name: 'twitter:description', content: 'Command-line toolkit that blends hand-crafted workflows with OpenAPI-generated commands for GitHub.' }],
         ['meta', { name: 'twitter:image', content: 'https://grithub.toneflix.net/banner.png' }],
+        ['meta', { name: 'twitter:site', content: '@toneflixx' }],
+        ['meta', { name: 'twitter:creator', content: '@toneflixx' }],
     ],
     themeConfig: {
         logo: '/banner.png',

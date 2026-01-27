@@ -24,8 +24,6 @@ jobs:
     permissions:
       contents: write
       id-token: write
-    env:
-      GITHUB_CLIENT_ID: ${{ github.event.inputs.client_id || secrets.GITHUB_CLIENT_ID }}
 
     steps:
       - name: Checkout code
@@ -133,6 +131,8 @@ jobs:
 
       - name: Build project
         run: pnpm build
+        env:
+          GITHUB_CLIENT_ID: ${{ github.event.inputs.client_id || secrets.CLIENT_ID }}
 
       - name: Publish to NPM
         run: pnpm publish --no-git-checks
