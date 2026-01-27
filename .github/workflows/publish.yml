@@ -7,6 +7,15 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (optional)'
+        required: false
+        default: ''
+      client_id:
+        description: 'GitHub App Client ID (optional)'
+        required: false
+        default: ''
 
 jobs:
   publish:
@@ -15,6 +24,8 @@ jobs:
     permissions:
       contents: write
       id-token: write
+    env:
+      GITHUB_CLIENT_ID: ${{ github.event.inputs.client_id || secrets.GITHUB_CLIENT_ID }}
 
     steps:
       - name: Checkout code
@@ -45,6 +56,7 @@ jobs:
 
       - name: Check and bump version if needed
         id: version_check
+        if: ${{ github.event.inputs.version == '' }}
         run: |
           # Get current version from package.json
           CURRENT_VERSION=$(node -p "require('./package.json').version")
@@ -100,6 +112,17 @@ jobs:
         run: |
           git add package.json
           git commit -m "chore: bump version to ${{ steps.version_check.outputs.new_version }} [skip ci]"
+          git push origin HEAD:main
+
+      - name: Set version from input
+        if: ${{ github.event.inputs.version != '' }}
+        run: |
+          echo "Setting version to ${{ github.event.inputs.version }}"
+          pnpm version "${{ github.event.inputs.version }}" --no-git-tag-version
+          echo "version_bumped=true" >> $GITHUB_OUTPUT
+          echo "new_version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          git add package.json
+          git commit -m "chore: set version to ${{ github.event.inputs.version }} [skip ci]"
           git push origin HEAD:main
 
       - name: Run linter
