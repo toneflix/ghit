@@ -62,7 +62,7 @@ export default () => {
                         return void this.newLine().error(`Missing required argument: ${param.parameter}`).newLine()
 
 
-                const repo = read<IRepoEntry>('default_repo')
+                const repo = read<IRepoEntry>('default_repo') ?? {}
                 const token = read<string | undefined>('token')
                 const repoSign = [$args.owner, $args.repo,].filter(Boolean).join('/')
                 const repository = ((repoSign || repo.full_name).split('/') ?? ['', '']) as [string, string]
