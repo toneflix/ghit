@@ -34,6 +34,9 @@ jobs:
           cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
 
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
       - name: Configure Git
         run: |
           git config --global user.name "github-actions[bot]"
@@ -46,8 +49,8 @@ jobs:
           CURRENT_VERSION=$(node -p "require('./package.json').version")
           echo "Current package.json version: $CURRENT_VERSION"
 
-          # Get published version from npm (suppress err  ors if package doesn't exist)
-          PUBLISHED_VERSION=$(npm view @toneflix/grithub version 2>/dev/null || echo "0.0.0")
+          # Get published version from npm (suppress errors if package doesn't exist)
+          PUBLISHED_VERSION=$(pnpm view @toneflix/grithub version 2>/dev/null || echo "0.0.0")
           echo "Published npm version: $PUBLISHED_VERSION"
 
           # Function to compare versions
@@ -81,7 +84,7 @@ jobs:
             echo "New version: $NEW_VERSION"
             
             # Update package.json
-            npm version "$NEW_VERSION" --no-git-tag-version
+            pnpm version "$NEW_VERSION" --no-git-tag-version
             
             echo "version_bumped=true" >> $GITHUB_OUTPUT
             echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
@@ -97,9 +100,6 @@ jobs:
           git add package.json
           git commit -m "chore: bump version to ${{ steps.version_check.outputs.new_version }} [skip ci]"
           git push origin HEAD:main
-
-      - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
 
       - name: Run linter
         run: pnpm lint
