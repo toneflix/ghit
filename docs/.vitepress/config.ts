@@ -6,17 +6,15 @@ export default defineConfig({
     cleanUrls: true,
     lastUpdated: true,
     head: [
-        ['link', { rel: 'icon', href: '/favicon.ico' }],
+        ['link', { rel: 'icon', href: 'https://grithub.toneflix.net/banner.png' }],
         ['meta', { name: 'viewport', content: 'width=device-width, initial-scale=1.0' }],
         ['meta', { name: 'theme-color', content: '#07c4f9' }],
         ['meta', { name: 'description', content: 'Build, test, and manage your Grithub integration from the terminal' }],
         ['meta', { property: 'og:title', content: 'Grithub' }],
         ['meta', { property: 'og:description', content: 'Build, test, and manage your Grithub integration from the terminal' }],
-        ['meta', { property: 'og:image', content: '/banner.png' }],
+        ['meta', { property: 'og:image', content: 'https://grithub.toneflix.net/banner.png' }],
         ['meta', { property: 'og:url', content: 'https://grithub.toneflix.net' }],
-        ['meta', { name: 'twitter:card', content: 'summary_large_image' }]
     ],
-
     themeConfig: {
         logo: '/banner.png',
 
