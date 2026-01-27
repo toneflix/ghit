@@ -49,7 +49,8 @@
         "publish-it": "pnpm build && pnpm publish --tag latest",
         "docs:dev": "vitepress dev docs",
         "docs:build": "vitepress build docs",
-        "docs:preview": "vitepress preview docs"
+        "docs:preview": "vitepress preview docs",
+        "preuninstall": "node uninstall.js"
     },
     "dependencies": {
         "@antfu/install-pkg": "^1.1.0",

@@ -148,5 +148,7 @@ vite.config.ts.timestamp-*
 docs/.vitepress/dist
 docs/.vitepress/cache
 
+/bin
 apis.generated.ts
+apis.generated.js
 .grithub

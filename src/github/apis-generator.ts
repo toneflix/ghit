@@ -1,11 +1,14 @@
 import { GeneratedParam, GeneratedTree } from '../Contracts/Grithub'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import path, { dirname } from 'node:path'
+import { read, write } from 'src/db'
 import { useCommand, useConfig } from '../hooks'
 
 import { IConfig } from '../Contracts/Interfaces'
 import { fileURLToPath } from 'node:url'
+import { homedir } from 'node:os'
 import { installPackage } from '@antfu/install-pkg'
+import { logger } from 'src/helpers'
 
 export class ApisGenerator {
     spec: Record<string, any>
@@ -172,10 +175,43 @@ export class ApisGenerator {
         return tree
     }
 
+    /**
+     * Get output path for generated APIs
+     * 
+     * @param type 
+     * @returns 
+     */
+    static getOutputPath (type: 'global' | 'local' = 'local'): string {
+        if (type === 'global') {
+            return path.join(homedir(), '.grithub/apis.generated.js')
+        }
+
+        return path.join(process.cwd(), '.grithub/apis.generated.js')
+    }
+
+    /**
+     * Run the API generator
+     * 
+     * @returns 
+     */
     static async run () {
+        let octokitOpenapi: any
+        let type = read<'global' | 'local'>('generated_commands_type', 'local')
         const [cmd] = useCommand()
         const command = cmd()
-        let octokitOpenapi: any
+
+        type = await command.choice(`Api Generation Type${type ? ` (${type.toTitleCase()})` : ''}`, [
+            { value: 'global', name: 'Global', description: 'Will always be available.' },
+            { value: 'local', name: 'Local', description: 'Only for this project.' },
+            { value: 'cancel', name: logger('Cancel', 'red'), description: 'Cancel the operation.' }
+        ], 0) as never
+
+        if (type === 'cancel') {
+            return void command.newLine().info('Operation cancelled.').newLine()
+        }
+
+        // Save the generation type
+        write('generated_commands_type', type)
 
         const spinner = command.spinner('Checking if @octokit/openapi Installed...').start()
 
@@ -189,10 +225,11 @@ export class ApisGenerator {
 
         spinner.start('Generating Extended APIs...')
 
+        // Instantiate generator
         const generator = new ApisGenerator(octokitOpenapi, 'api.github.com.deref')
-        const tree = generator.buildTree()
 
-        const target = path.join(process.cwd(), '.grithub/apis.generated.js')
+        const tree = generator.buildTree()
+        const target = ApisGenerator.getOutputPath(type)
         const header = '// Auto-generated from @octokit/openapi. Do not edit directly.\n\n'
 
         const stringObject = JSON
@@ -210,7 +247,6 @@ export class ApisGenerator {
 
         mkdirSync(path.dirname(target), { recursive: true })
         writeFileSync(target, contents, 'utf8')
-
-        spinner.succeed('Generated Extended APIs to: ' + target)
+        spinner.succeed('Generated Extended APIs to: ' + logger(target, ['gray', 'italic']))
     }
 }

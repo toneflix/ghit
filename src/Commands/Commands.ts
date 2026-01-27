@@ -2,13 +2,13 @@ import { XCommand, XSchema } from '../Contracts/Generic'
 import { executeSchema, promiseWrapper } from 'src/helpers'
 
 import APIs from '../github/apis'
+import { ApisGenerator } from 'src/github/apis-generator'
 import { Command } from '@h3ravel/musket'
 import { IRepoEntry } from 'src/Contracts/Interfaces'
 import { buildSignature } from 'src/utils/argument'
 import { createRequire } from 'node:module'
 import { dataRenderer } from '../utils/renderer'
 import { existsSync } from 'node:fs'
-import path from 'node:path'
 import { read } from '../db'
 import { useCommand } from '../hooks'
 
@@ -18,13 +18,10 @@ export default () => {
     let GeneratedAPIs = APIs
 
     const isGeneratingApis = process.argv.includes('generate:apis')
+    const generatedApisPath = ApisGenerator.getOutputPath(read('generated_commands_type', 'local'))
 
-    if (!isGeneratingApis &&
-        existsSync(path.join(process.cwd(), '.grithub/apis.generated.js'))
-    ) {
-        ({ APIs: GeneratedAPIs } = require(
-            path.join(process.cwd(), '.grithub/apis.generated.js')
-        ))
+    if (!isGeneratingApis && existsSync(generatedApisPath)) {
+        ({ APIs: GeneratedAPIs } = require(generatedApisPath))
     }
 
     /**

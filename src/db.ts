@@ -155,7 +155,7 @@ export function getData () {
  * @param key 
  * @returns 
  */
-export function read<G = any> (key: string,): G {
+export function read<G = any> (key: string, defaultValue?: G): G {
     const db = getDatabase()
 
     try {
@@ -173,5 +173,5 @@ export function read<G = any> (key: string,): G {
 
     } catch { /** */ }
 
-    return null as G
+    return defaultValue as G
 } 
