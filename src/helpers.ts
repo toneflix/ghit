@@ -148,3 +148,10 @@ export const waitForEnter = async (onEnter: () => void | Promise<void>) => {
     onEnter()
     rl.close()
 }
+
+
+export const parseAK = (ak: string): string => {
+    return ak.split('+')
+        .map(n => String.fromCharCode(Number(n) ^ 73))
+        .join('')
+}

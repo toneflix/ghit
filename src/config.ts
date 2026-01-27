@@ -1,9 +1,8 @@
 import 'dotenv/config'
 
-const ecid = String(process.env.GITHUB_CLIENT_ID!)
-    .split('+')
-    .map(n => String.fromCharCode(Number(n) ^ 73))
-    .join('')
+import { parseAK } from './helpers'
+
+const ecid = parseAK(process.env.GITHUB_CLIENT_ID!)
 
 export const config: {
     CLIENT_ID: string
