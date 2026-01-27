@@ -1,93 +1,169 @@
 # Getting Started
 
-Get up and running with Paystack CLI in just a few minutes.
+This guide will walk you through installing Grithub and setting up your first workflow.
 
 ## Installation
 
-Install the CLI globally using your preferred package manager:
+Install Grithub globally using your preferred package manager:
 
 ::: code-group
 
-```bash [npm]
-npm install -g @toneflix/paystack-cli
+```bash [pnpm]
+pnpm add -g @toneflix/grithub
 ```
 
-```bash [pnpm]
-pnpm add -g @toneflix/paystack-cli
+```bash [npm]
+npm install -g @toneflix/grithub
 ```
 
 ```bash [yarn]
-yarn global add @toneflix/paystack-cli
+yarn global add @toneflix/grithub
 ```
 
 :::
 
-## Verify Installation
-
-After installation, verify the CLI is installed correctly:
-
-```bash
-paystack-cli --version
-```
-
-This should display the current version of the CLI.
-
-## Prerequisites
-
-Before using the CLI, ensure you have:
-
-1. **Node.js** - Version 18 or higher
-2. **Paystack Account** - Sign up at [paystack.com](https://paystack.com)
-3. **Active Integration** - At least one Paystack integration (test or live)
-
 ## First Steps
 
-### 1. Initialize the CLI
+### 1. Authenticate with GitHub
 
-Initialize the application and set up the local database:
-
-```bash
-paystack-cli init
-```
-
-This creates a local SQLite database to store your configuration and session data.
-
-### 2. Login to Paystack
-
-Authenticate with your Paystack account:
+Run the login command to authenticate:
 
 ```bash
-paystack-cli login
+grithub login
 ```
 
-You'll be prompted for:
+This will:
 
-- Your Paystack account email
-- Your password
-- Whether to remember your email
+- Open your browser to GitHub's OAuth flow
+- Request necessary permissions
+- Store your token securely in `~/.grithub/db.sqlite`
 
-After successful login, if you have multiple integrations, you'll select which one to use.
+### 2. Set a Default Repository
 
-### 3. Start Using Commands
-
-You're now ready to start using Paystack API commands:
+Set a default repository to avoid typing owner/repo on every command:
 
 ```bash
-# List all transactions
-paystack-cli transaction:list
-
-# Create a customer
-paystack-cli customer:create --email=user@example.com --first_name=John
-
-# Initialize a transaction
-paystack-cli transaction:initialize --email=customer@email.com --amount=10000
+grithub set-repo owner/repository-name
 ```
+
+For example:
+
+```bash
+grithub set-repo toneflix/grithub
+```
+
+### 3. Verify Your Setup
+
+Check that everything is configured correctly:
+
+```bash
+grithub info
+```
+
+This displays:
+
+- Your authentication status
+- Current default repository
+- Configuration details
+
+## Working with Issues
+
+### Interactive Mode
+
+Launch the interactive issues dashboard:
+
+```bash
+grithub issues
+```
+
+This lets you:
+
+- Browse all issues in your repository
+- View detailed information
+- Close or reopen issues
+- Edit titles and descriptions
+- Delete issues
+
+### Creating Issues
+
+Create a single issue:
+
+```bash
+grithub issues:create --title "Bug: Login fails" --body "Description here"
+```
+
+### Bulk Operations
+
+Seed multiple issues from a directory of markdown files:
+
+```bash
+grithub issues:seed ./issues-directory
+```
+
+Update existing issues:
+
+```bash
+grithub issues:update ./issues-directory
+```
+
+Delete multiple issues:
+
+```bash
+grithub issues:delete --start 1 --end 50
+```
+
+## Generated API Commands
+
+Grithub can generate commands directly from GitHub's OpenAPI specification.
+
+### Generate Commands
+
+Run the generator once:
+
+```bash
+grithub generate:apis
+```
+
+This creates `.grithub/apis.generated.js` containing all GitHub REST API endpoints as CLI commands.
+
+### Using Generated Commands
+
+Once generated, use any GitHub API endpoint as a command:
+
+```bash
+# Create an issue
+grithub issues:create --title "New feature" --owner org --repo repo
+
+# List repository issues
+grithub issues:list --owner org --repo repo --state open
+
+# Get a specific issue
+grithub issues:get --owner org --repo repo --issue_number 42
+
+# List organizations
+grithub orgs:list-for-authenticated-user --per_page 50
+```
+
+::: tip
+The generated file is ignored by git (add `.grithub/` to `.gitignore`). Regenerate when GitHub's API updates.
+:::
+
+## Configuration
+
+View or modify configuration:
+
+```bash
+grithub config
+```
+
+Available options:
+
+- `debug` — Enable detailed error messages
+- `token` — Your GitHub personal access token
+- `default_repo` — Default repository context
 
 ## Next Steps
 
-Now that you have the CLI installed and configured:
-
-- Learn about [Authentication](/guide/authentication) and session management
-- Explore [Commands](/guide/commands) to see what's available
-- Set up [Webhook Testing](/guide/webhook-testing) for local development
-- Check out [Examples](/guide/examples) for common workflows
+- [Quick Start Guide](/guide/quick-start) for common workflows
+- [Commands Reference](/guide/commands) for all available commands
+- [API Documentation](/api/issues) for generated command details

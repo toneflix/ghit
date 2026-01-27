@@ -1,363 +1,209 @@
 # Contributing
 
-Thank you for your interest in contributing to Paystack CLI! This document provides guidelines and instructions for contributing.
+Thank you for considering contributing to Grithub! This guide will help you get started.
 
 ## Code of Conduct
 
-By participating in this project, you agree to maintain a respectful and inclusive environment for all contributors.
+Be respectful and constructive in all interactions. We aim to create a welcoming environment for contributors of all backgrounds.
 
 ## How to Contribute
 
-### Reporting Bugs
+There are many ways to contribute:
 
-Before creating a bug report:
+### Report Bugs
 
-1. Check [existing issues](https://github.com/toneflix/paystack-cli/issues) to avoid duplicates
-2. Use the latest version of the CLI
-3. Collect relevant information (error messages, environment details)
+Found a bug? [Open an issue](https://github.com/toneflix/grithub/issues/new) with:
 
-**Creating a Bug Report**:
+- Clear title and description
+- Steps to reproduce
+- Expected vs actual behavior
+- Your environment (OS, Node version, etc.)
+- Screenshots if applicable
 
-1. Open a new issue on GitHub
-2. Use a clear and descriptive title
-3. Provide detailed steps to reproduce
-4. Include expected vs. actual behavior
-5. Add environment information:
-   - OS and version
-   - Node.js version
-   - CLI version
-   - Relevant logs (remove sensitive data)
-
-Example bug report:
+**Example:**
 
 ```markdown
-## Bug Description
+**Bug:** Issues command fails with authentication error
 
-Transaction initialization fails with "Invalid email" error even with valid email
+**Steps to reproduce:**
 
-## Steps to Reproduce
+1. Run `grithub login`
+2. Run `grithub issues`
+3. See error: "Authentication failed"
 
-1. Run: paystack-cli transaction:initialize --email=user@example.com --amount=50000
-2. Observe error message
+**Expected:** Should show list of issues
 
-## Expected Behavior
+**Environment:**
 
-Transaction should initialize successfully
-
-## Actual Behavior
-
-Error: "Invalid email address"
-
-## Environment
-
-- OS: macOS 13.5
-- Node: v18.17.0
-- CLI: v1.0.0
+- OS: macOS 14.2
+- Node: 18.19.0
+- Grithub: 0.1.6
 ```
 
-### Suggesting Enhancements
+### Suggest Features
 
-Enhancement suggestions are welcome! To suggest a feature:
+Have an idea? [Open a feature request](https://github.com/toneflix/grithub/issues/new) with:
 
-1. Check if the feature already exists or is planned
-2. Open an issue with the `enhancement` label
-3. Provide:
-   - Clear description of the feature
-   - Use cases and benefits
-   - Potential implementation approach
-   - Examples of similar features in other tools
+- Clear use case
+- Proposed solution
+- Alternative approaches considered
+- Willingness to implement
 
-### Pull Requests
+**Example:**
 
-We actively welcome your pull requests:
+```markdown
+**Feature:** Add support for GitHub Discussions
 
-1. **Fork the repository** and create your branch from `main`
-2. **Make your changes**:
-   - Follow the code style guidelines
-   - Add tests for new features
-   - Update documentation
-3. **Test your changes**:
-   - Run all tests: `pnpm test`
-   - Test manually with real commands
-4. **Commit your changes**:
-   - Use clear commit messages
-   - Follow commit message conventions
-5. **Push to your fork** and submit a pull request
-6. **Respond to feedback** during code review
+**Use case:** Teams using Discussions want CLI management
 
-## Development Setup
+**Proposed solution:**
 
-### Prerequisites
+- Add `grithub discussions` command
+- Support CRUD operations
+- Enable bulk operations
 
-- Node.js 18 or higher
-- pnpm package manager
-- Git
+**Alternatives:**
 
-### Setting Up
+- Use GitHub CLI (lacks bulk operations)
+- Manual API calls (not user-friendly)
+
+**Implementation:** I can implement this if approved
+```
+
+### Improve Documentation
+
+Documentation is crucial! You can:
+
+- Fix typos or unclear explanations
+- Add examples or use cases
+- Improve code samples
+- Translate to other languages
+
+Documentation lives in `docs/`:
 
 ```bash
-# 1. Fork and clone the repository
-git clone https://github.com/YOUR_USERNAME/paystack-cli.git
-cd paystack-cli
+# Start docs server
+pnpm docs:dev
 
-# 2. Install dependencies
-pnpm install
+# Edit markdown files
+vi docs/guide/getting-started.md
 
-# 3. Build the project
-pnpm run build
-
-# 4. Link for local testing
-pnpm link --global
-
-# 5. Test your installation
-paystack-cli --version
+# Preview changes at http://localhost:5173
 ```
+
+### Write Code
+
+Ready to code? Follow this workflow:
 
 ## Development Workflow
 
-### Branch Naming
+### 1. Fork Repository
 
-Use descriptive branch names:
+Click "Fork" on [GitHub](https://github.com/toneflix/grithub)
 
-- `feature/add-new-command` - New features
-- `fix/transaction-error` - Bug fixes
-- `docs/update-readme` - Documentation updates
-- `refactor/improve-error-handling` - Code refactoring
-- `test/add-integration-tests` - Test additions
-
-### Coding Standards
-
-#### TypeScript
-
-- Use TypeScript strict mode
-- Define explicit types for public APIs
-- Prefer interfaces over type aliases for objects
-- Use const over let where possible
-
-```typescript
-// ✓ Good
-interface TransactionData {
-  email: string;
-  amount: number;
-}
-
-const initializeTransaction = async (
-  data: TransactionData,
-): Promise<Response> => {
-  // Implementation
-};
-
-// ✗ Avoid
-const initializeTransaction = async (data: any) => {
-  // Implementation
-};
-```
-
-#### Naming Conventions
-
-- **Classes**: PascalCase (`TransactionCommand`)
-- **Files**: PascalCase for classes, camelCase for utilities
-- **Variables/Functions**: camelCase (`processPayment`)
-- **Constants**: UPPER_SNAKE_CASE (`API_VERSION`)
-- **Private members**: Prefix with underscore (`_internalMethod`)
-
-#### Command Structure
-
-New commands should follow this pattern:
-
-```typescript
-import { Command } from 'h3ravel-musket';
-import paystack from '../Paystack';
-import { output } from '../helpers';
-
-export default class MyCommand extends Command {
-  // Command signature with arguments and options
-  static signature = 'resource:action {argument?} {--option=}';
-
-  // Brief description shown in help
-  static description = 'Description of what this command does';
-
-  async handle() {
-    // Get arguments and options
-    const argument = this.argument('argument');
-    const option = this.option('option');
-
-    try {
-      // Make API call
-      const response = await paystack.api.someEndpoint({
-        argument,
-        option,
-      });
-
-      // Output result
-      output(response.data, this.json);
-    } catch (error) {
-      // Handle errors gracefully
-      this.error('User-friendly error message');
-      throw error;
-    }
-  }
-}
-```
-
-#### Error Handling
-
-Always use try-catch blocks and provide helpful error messages:
-
-```typescript
-try {
-  const response = await paystack.api.transfer({
-    amount,
-    recipient,
-  });
-  output(response.data, this.json);
-} catch (error) {
-  if (error.response?.status === 401) {
-    this.error('Authentication failed. Please run: paystack-cli login');
-  } else if (error.response?.status === 400) {
-    this.error(`Invalid request: ${error.response.data.message}`);
-  } else {
-    this.error('An error occurred. Please try again.');
-  }
-  throw error;
-}
-```
-
-### Testing
-
-#### Writing Tests
-
-Create tests in `src/__tests__/`:
-
-```typescript
-import { describe, it, expect, beforeEach } from 'vitest';
-import MyCommand from '../Commands/MyCommand';
-
-describe('MyCommand', () => {
-  beforeEach(() => {
-    // Setup
-  });
-
-  it('should handle valid input', async () => {
-    const command = new MyCommand();
-    // Test implementation
-    expect(command).toBeDefined();
-  });
-
-  it('should reject invalid input', async () => {
-    // Test error cases
-  });
-});
-```
-
-#### Running Tests
+### 2. Clone Your Fork
 
 ```bash
-# Run all tests
-pnpm test
-
-# Watch mode for development
-pnpm test:watch
-
-# Coverage report
-pnpm test:coverage
-
-# Run specific test file
-pnpm test MyCommand.test.ts
+git clone https://github.com/YOUR_USERNAME/grithub.git
+cd grithub
 ```
 
-### Documentation
+### 3. Add Upstream Remote
 
-Update documentation when making changes:
+```bash
+git remote add upstream https://github.com/toneflix/grithub.git
+```
 
-#### Code Documentation
+### 4. Create Branch
 
-Use JSDoc comments for public APIs:
+```bash
+git checkout -b feature/my-feature
+```
+
+Branch naming:
+
+- `feature/` - New features
+- `fix/` - Bug fixes
+- `docs/` - Documentation
+- `refactor/` - Code refactoring
+- `test/` - Test additions/fixes
+
+### 5. Install Dependencies
+
+```bash
+pnpm install
+```
+
+### 6. Make Changes
+
+Edit files in `src/`:
 
 ```typescript
-/**
- * Initialize a new transaction
- * @param email - Customer email address
- * @param amount - Amount in kobo (smallest currency unit)
- * @param options - Additional transaction options
- * @returns Promise resolving to transaction response
- */
-async initializeTransaction(
-  email: string,
-  amount: number,
-  options?: TransactionOptions
-): Promise<TransactionResponse> {
-  // Implementation
+// Example: src/Commands/MyCommand.ts
+import { Command } from '@h3ravel/musket';
+
+export class MyCommand extends Command {
+  protected signature = 'my-command';
+  protected description = 'My new command';
+
+  async handle() {
+    this.info('Hello, Grithub!');
+  }
 }
 ```
 
-#### README Updates
+### 7. Test Changes
 
-- Add new commands to the command list
-- Update examples if behavior changes
-- Add new sections for significant features
+```bash
+# Run in development
+pnpm runner my-command
 
-#### VitePress Documentation
+# Run tests
+pnpm test
 
-Update relevant pages in `/docs/`:
-
-- Guide pages for new features
-- API reference for new endpoints
-- Examples for new workflows
-
-### Commit Messages
-
-Follow conventional commit format:
-
-```sh
-type(scope): subject
-
-body
-
-footer
+# Lint code
+pnpm lint
 ```
 
-**Types**:
+### 8. Commit Changes
 
-- `feat`: New feature
-- `fix`: Bug fix
-- `docs`: Documentation changes
-- `style`: Code style changes (formatting, no logic changes)
-- `refactor`: Code refactoring
-- `test`: Adding or updating tests
-- `chore`: Maintenance tasks
+Use [Conventional Commits](https://www.conventionalcommits.org/):
 
-**Examples**:
-
-```sh
-feat(transaction): add support for split payments
-
-Added --subaccount option to transaction:initialize command
-to enable split payment functionality
-
-Closes #123
-
-fix(webhook): resolve signature verification issue
-
-Updated signature calculation to match Paystack's current implementation
-
-docs(readme): update installation instructions
-
-Added pnpm installation method and troubleshooting section
+```bash
+git add .
+git commit -m "feat: add my-command"
 ```
 
-## Pull Request Process
+Commit types:
 
-### Before Submitting
+- `feat:` - New feature
+- `fix:` - Bug fix
+- `docs:` - Documentation
+- `style:` - Formatting
+- `refactor:` - Code refactoring
+- `test:` - Tests
+- `chore:` - Maintenance
 
-- [ ] Code follows the style guidelines
-- [ ] Tests added/updated and passing
-- [ ] Documentation updated
-- [ ] Commit messages are clear and descriptive
-- [ ] No console.log or debug code left
-- [ ] Sensitive data removed from examples
+**Examples:**
 
-### Pull Request Template
+```bash
+git commit -m "feat: add bulk delete for pull requests"
+git commit -m "fix: resolve authentication timeout issue"
+git commit -m "docs: update installation instructions"
+git commit -m "refactor: simplify issue parsing logic"
+```
+
+### 9. Push Changes
+
+```bash
+git push origin feature/my-feature
+```
+
+### 10. Create Pull Request
+
+Go to GitHub and click "Compare & pull request"
+
+**PR Template:**
 
 ```markdown
 ## Description
@@ -371,86 +217,245 @@ Brief description of changes
 - [ ] Breaking change
 - [ ] Documentation update
 
-## Changes Made
-
-- Detailed list of changes
-- What was added/modified/removed
-
 ## Testing
 
-- [ ] Unit tests pass
-- [ ] Manual testing completed
-- [ ] Edge cases considered
-
-## Screenshots (if applicable)
-
-Before/after screenshots for UI changes
-
-## Related Issues
-
-Fixes #123
-Related to #456
+How was this tested?
 
 ## Checklist
 
-- [ ] Code follows style guidelines
-- [ ] Self-review completed
+- [ ] Code follows project style
+- [ ] Tests pass
 - [ ] Documentation updated
-- [ ] Tests added/updated
 - [ ] No breaking changes (or documented)
 ```
 
-### Code Review Process
+## Development Guidelines
 
-1. **Automated Checks**: CI/CD runs tests and linters
-2. **Maintainer Review**: A maintainer reviews your code
-3. **Feedback**: Address any requested changes
-4. **Approval**: Once approved, your PR will be merged
+### Code Style
 
-## Release Process
+#### TypeScript
 
-Releases are managed by project maintainers:
+Use strict typing:
 
-1. Version bump according to semver
-2. Update CHANGELOG.md
-3. Create release tag
-4. Publish to npm
-5. Create GitHub release
+```typescript
+// Good
+function getIssue(number: number): Promise<IIssue> {
+  return octokit.rest.issues.get({ number });
+}
+
+// Avoid
+function getIssue(number: any): any {
+  return octokit.rest.issues.get({ number });
+}
+```
+
+#### Naming Conventions
+
+```typescript
+// Classes: PascalCase
+class IssuesCommand extends Command {}
+
+// Functions/Variables: camelCase
+function parseIssue(data: any) {}
+const issueNumber = 42;
+
+// Constants: UPPER_SNAKE_CASE
+const MAX_RETRIES = 3;
+
+// Interfaces: PascalCase with I prefix
+interface IUser {
+  name: string;
+  email: string;
+}
+```
+
+#### File Structure
+
+```typescript
+// Imports first
+import { Command } from '@h3ravel/musket';
+import { useOctokit } from '../hooks';
+import type { IIssue } from '../Contracts/Interfaces';
+
+// Class/function definition
+export class MyCommand extends Command {
+  // Class implementation
+}
+
+// No default export for classes
+// Use named exports
+```
+
+### Error Handling
+
+Always handle errors gracefully:
+
+```typescript
+import { promiseWrapper } from '../helpers';
+
+const [err, result] = await promiseWrapper(
+  octokit.rest.issues.create({
+    /* ... */
+  }),
+);
+
+if (err) {
+  this.error(`Failed to create issue: ${err.message}`);
+  return;
+}
+
+this.success(`Issue #${result.data.number} created`);
+```
+
+### User Feedback
+
+Provide clear feedback:
+
+```typescript
+// Use spinners for operations
+const spinner = this.spinner('Creating issue...').start();
+
+try {
+  await createIssue();
+  spinner.succeed('Issue created successfully');
+} catch (error) {
+  spinner.fail('Failed to create issue');
+  this.error(error.message);
+}
+
+// Use appropriate log levels
+this.info('Information message');
+this.success('Success message');
+this.warn('Warning message');
+this.error('Error message');
+```
+
+### Testing
+
+Write tests for new features:
+
+```typescript
+// tests/my-feature.spec.ts
+import { describe, it, expect } from 'vitest';
+import { myFunction } from '../src/my-feature';
+
+describe('myFunction', () => {
+  it('should return expected result', () => {
+    const result = myFunction('input');
+    expect(result).toBe('expected');
+  });
+
+  it('should handle edge cases', () => {
+    expect(myFunction('')).toBe('');
+    expect(myFunction(null)).toBeUndefined();
+  });
+});
+```
+
+### Documentation
+
+Document all public APIs:
+
+```typescript
+/**
+ * Creates an issue in the specified repository.
+ *
+ * @param owner - Repository owner
+ * @param repo - Repository name
+ * @param title - Issue title
+ * @param body - Issue description
+ * @returns Created issue object
+ * @throws {Error} If authentication fails
+ */
+async function createIssue(
+  owner: string,
+  repo: string,
+  title: string,
+  body?: string,
+): Promise<IIssue> {
+  // Implementation
+}
+```
+
+## Pull Request Guidelines
+
+### Before Submitting
+
+Checklist:
+
+- [ ] Code follows style guidelines
+- [ ] All tests pass: `pnpm test`
+- [ ] Lint passes: `pnpm lint`
+- [ ] Build succeeds: `pnpm build`
+- [ ] Documentation updated
+- [ ] Commit messages follow conventions
+- [ ] Branch is up to date with main
+
+### PR Description
+
+Include:
+
+1. **What** - What does this PR do?
+2. **Why** - Why is this change needed?
+3. **How** - How does it work?
+4. **Testing** - How was it tested?
+5. **Screenshots** - If UI changes
+
+### Review Process
+
+1. **Automated Checks** - CI runs tests and linting
+2. **Code Review** - Maintainer reviews code
+3. **Feedback** - Address review comments
+4. **Approval** - PR approved for merge
+5. **Merge** - Squash and merge to main
+
+### After Merge
+
+Your contribution will be:
+
+- Included in next release
+- Listed in changelog
+- Credited in release notes
+
+## First Time Contributors
+
+New to open source? Look for issues labeled:
+
+- `good first issue` - Easy entry points
+- `help wanted` - Contributions welcome
+- `documentation` - Docs improvements
+
+Don't hesitate to ask questions!
 
 ## Getting Help
 
-### Questions?
+### Questions
 
-- Check the [documentation](/guide/getting-started)
-- Review [existing issues](https://github.com/toneflix/paystack-cli/issues)
-- Ask in GitHub Discussions
+- Open a [Discussion](https://github.com/toneflix/grithub/discussions)
+- Ask in [Issues](https://github.com/toneflix/grithub/issues)
 
-### Development Help
+### Stuck?
 
-- Review the [Development Guide](/guide/development)
-- Check [examples](/guide/examples) for code patterns
-- Look at existing commands for reference
-
-## Recognition
-
-Contributors will be:
-
-- Listed in README.md contributors section
-- Credited in release notes
-- Appreciated in the community!
+- Review [Development Guide](/guide/development)
+- Check existing [Pull Requests](https://github.com/toneflix/grithub/pulls)
+- Read [GitHub Docs](https://docs.github.com/en/rest)
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the same license as the project (MIT License).
+By contributing, you agree that your contributions will be licensed under the ISC License.
 
-## Thank You!
+## Recognition
 
-Your contributions make this project better for everyone. Thank you for taking the time to contribute!
+Contributors are recognized:
 
----
+- In release notes
+- In changelog
+- On GitHub contributors page
 
-For more information:
+Thank you for contributing to Grithub! 🎉
 
-- [Development Guide](/guide/development)
-- [Examples](/guide/examples)
-- [Troubleshooting](/guide/troubleshooting)
+## Next Steps
+
+- [Development Guide](/guide/development) - Set up development environment
+- [Commands](/guide/commands) - Learn command structure
+- [GitHub Issues](https://github.com/toneflix/grithub/issues) - Find issues to work on

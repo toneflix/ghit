@@ -149,3 +149,4 @@ docs/.vitepress/dist
 docs/.vitepress/cache
 
 apis.generated.ts
+.grithub

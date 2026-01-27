@@ -1,158 +1,478 @@
 # Configuration
 
-Configure Paystack CLI settings to customize your development experience.
+Customize Grithub's behavior through the interactive configuration interface or direct database access.
+
+## Overview
+
+Grithub stores configuration includes:
+
+- Debug mode
+- API settings
+- Default repository
+- Timeout preferences
+- Ngrok Auth Token
+- Command generation options
 
 ## Configuration Command
 
-Access the configuration interface:
+Access the interactive configuration:
 
 ```bash
-paystack-cli config
+grithub config
 ```
 
-This launches an interactive menu where you can modify various settings.
+You'll see:
 
-## Available Settings
+```bash
+? Select configuration to set
+❯ Debug Mode
+  API Base URL
+  Timeout Duration
+  Skip Long Command Generation
+  Ngrok Auth Token
+  Reset Configuration
+
+Enable or disable debug mode (Disabled)
+↑↓ navigate • ⏎ select
+```
+
+## Configuration Options
+
+### Debug Mode
+
+Enable detailed error messages and logging.
+
+```bash
+grithub config
+# Select "Debug Mode"
+# Toggle enabled/disabled
+```
+
+**When enabled:**
+
+- Full error stack traces
+- Detailed API request/response logs
+- Verbose operation output
+
+**When disabled:**
+
+- Clean error messages
+- Minimal output
+- Production-ready logging
+
+**Example:**
+
+```bash
+# Debug disabled
+ERROR: An error occurred
+
+# Debug enabled
+ERROR: An error occurred
+Stack trace:
+  at Object.<anonymous> (/path/to/file.ts:123:45)
+  at Module._compile (node:internal/modules/cjs/loader:1246:14)
+  ...
+```
 
 ### API Base URL
 
-- **Default:** `https://api.paystack.co`
-- **Purpose:** The base URL for Paystack API requests
-- **When to change:** If you're using a proxy or custom API endpoint
+Set the GitHub API base URL.
+
+**Default:** `https://api.github.com`
+
+**Use cases:**
+
+- GitHub Enterprise Server
+- API proxy/gateway
+- Testing against mock servers
+
+**Example:**
 
 ```bash
-# Select "API Base URL" from config menu
-# Enter new URL: https://your-proxy.com/api
+grithub config
+# Select "API Base URL"
+# Enter: https://github.company.com/api/v3
 ```
+
+::: warning
+For GitHub.com, always use the default `https://api.github.com`.
+:::
 
 ### Timeout Duration
 
-- **Default:** `3000ms` (3 seconds)
-- **Purpose:** HTTP request timeout in milliseconds
-- **When to change:** If you experience timeout errors or need longer waits
+Set request timeout in milliseconds.
+
+**Default:** `3000` (3 seconds)
+
+**Recommended values:**
+
+- Fast networks: `3000-5000`
+- Slow/unstable networks: `10000-30000`
+- Enterprise/VPN: `15000-60000`
+
+**Example:**
 
 ```bash
-# Select "Timeout Duration" from config menu
-# Enter new timeout in ms: 5000
+grithub config
+# Select "Timeout Duration"
+# Enter: 10000
+```
+
+### Skip Long Command Generation
+
+Control whether to skip generating commands with many parameters.
+
+**Default:** `Enabled`
+
+**When enabled:**
+
+- Faster `generate:apis` execution
+- Skips endpoints with 20+ parameters or very long names
+- Reduces generated file size
+
+**When disabled:**
+
+- Complete API coverage
+- Slower generation
+- Larger generated file
+
+**Example:**
+
+```bash
+grithub config
+# Select "Skip Long Command Generation"
+# Toggle enabled/disabled
+```
+
+### Ngrok Auth Token
+
+Set Ngrok authentication token for webhook testing.
+
+**Example:**
+
+```bash
+grithub config
+# Select "Ngrok Auth Token"
+# Enter your token: 2abc...
+```
+
+**Alternative:** Set via environment variable
+
+```bash
+export NGROK_AUTHTOKEN="your_token_here"
+```
+
+### Reset Configuration
+
+Restore all settings to defaults.
+
+```bash
+grithub config
+# Select "Reset Configuration"
+# Confirm reset
+```
+
+This resets:
+
+- Debug mode → `false`
+- API Base URL → `https://api.github.com`
+- Timeout Duration → `3000`
+- Skip Long Command Generation → `true`
+- Ngrok Auth Token → `undefined`
+
+::: danger
+Reset does NOT clear authentication token or default repository.
+:::
+
+## Default Repository
+
+Set your default repository context.
+
+### Set Default Repository
+
+```bash
+grithub set-repo owner/repository
+```
+
+**Examples:**
+
+```bash
+# Direct specification
+grithub set-repo toneflix/grithub
+
+# Interactive selection from your repos
+grithub set-repo
+
+# From organization repos
+grithub set-repo --org
+```
+
+### Benefits
+
+Once set, omit `--owner` and `--repo` flags:
+
+```bash
+# Before (without default)
+grithub issues:create --title "Bug" --owner toneflix --repo grithub
+
+# After (with default)
+grithub issues:create --title "Bug"
+```
+
+### Change Default Repository
+
+```bash
+# Set new default
+grithub set-repo different-owner/different-repo
+
+# Or interactively
+grithub set-repo
+```
+
+## Viewing Current Configuration
+
+Display all settings:
+
+```bash
+grithub info
+```
+
+Output includes:
+
+```bash
+┌─────────────────────-───┬──────────────────────────┐
+│ Key                     │ Value                    │
+├──────────────────────-──┼──────────────────────────┤
+│ App Version             │ 0.1.6                    │
+│ Platform                │ darwin                   │
+│ CPUs                    │ 8                        │
+│ Host                    │ username@Machine.host    │
+│ Database Path           │ ~/.grithub/app.db        │
+│ Github User             │ youruser (ID: xxxxxxxx)  │
+│ Default Repo            │ toneflix-forks/dummy     │
+└───────────────────────-─┴──────────────────────────┘
+```
+
+## Environment Variables
+
+Override configuration via environment variables:
+
+### GitHub Token
+
+```bash
+export GITHUB_TOKEN="ghp_your_token_here"
+grithub issues:list
+```
+
+### API Base URL
+
+```bash
+export GITHUB_API_URL="https://github.company.com/api/v3"
+grithub issues:list
+```
+
+### Ngrok Token
+
+```bash
+export NGROK_AUTHTOKEN="your_ngrok_token"
+grithub webhook:listen
 ```
 
 ### Debug Mode
 
-- **Default:** `false`
-- **Purpose:** Enable detailed error messages and stack traces
-- **When to enable:** When troubleshooting issues or during development
-
 ```bash
-# Select "Debug Mode" from config menu
-# Choose: true
+export GRITHUB_DEBUG=true
+grithub issues:create --title "Test"
 ```
 
-When debug mode is enabled, you'll see:
-
-- Full error stack traces
-- Detailed request/response information
-- Internal error messages
-
-### Ngrok Auth Token
-
-- **Default:** None
-- **Purpose:** Authentication token for ngrok tunneling
-- **Required for:** Webhook testing with `webhook listen` command
-
-```bash
-# Select "Ngrok Auth Token" from config menu
-# Enter your token from ngrok.com
-```
-
-Get your token from [ngrok.com/get-started/your-authtoken](https://dashboard.ngrok.com/get-started/your-authtoken)
-
-## Environment Variables
-
-You can also configure settings using environment variables:
-
-### NGROK_AUTH_TOKEN
-
-Set your ngrok authentication token:
-
-```bash
-export NGROK_AUTH_TOKEN="your_token_here"
-```
-
-### NGROK_DOMAIN
-
-If you have a paid ngrok plan with a custom domain:
-
-```bash
-export NGROK_DOMAIN="your-domain.ngrok.io"
-```
-
-## Configuration Storage
-
-All configuration is stored in the local SQLite database (`app.db`) alongside your authentication data. This means:
-
-- Configuration persists across sessions
-- Each project can have its own configuration
-- No global system-wide settings (unless using environment variables)
-
-## Configuration Examples
-
-### Development Setup
-
-```bash
-# Enable debug mode for development
-paystack-cli config
-# Select "Debug Mode" → true
-
-# Set longer timeout for slow connections
-paystack-cli config
-# Select "Timeout Duration" → 10000
-```
-
-### Production Setup
-
-```bash
-# Disable debug mode
-paystack-cli config
-# Select "Debug Mode" → false
-
-# Use default timeout
-paystack-cli config
-# Select "Timeout Duration" → 3000
-```
-
-### Webhook Testing Setup
-
-```bash
-# Configure ngrok token
-paystack-cli config
-# Select "Ngrok Auth Token" → paste_your_token
-
-# Verify webhook listening works
-paystack-cli webhook listen http://localhost:3000/webhook
-```
-
-## Resetting Configuration
-
-To reset to defaults, simply reconfigure each setting through the config menu, or delete the `app.db` file and run:
-
-```bash
-paystack-cli init
-```
-
-::: warning
-Deleting `app.db` will also clear your authentication session.
+::: tip
+Environment variables take precedence over database configuration.
 :::
+
+## Configuration File Location
+
+All configuration is stored in SQLite:
+
+```
+~/.grithub/
+└── app.db
+```
+
+### Backup Configuration
+
+```bash
+cp ~/.grithub/app.db ~/.grithub/app.db.backup
+```
+
+### Restore Configuration
+
+```bash
+cp ~/.grithub/app.db.backup ~/.grithub/app.db
+```
+
+### Transfer to Another Machine
+
+```bash
+# On old machine
+cp ~/.grithub/app.db /path/to/usb/grithub-config.db
+
+# On new machine
+mkdir -p ~/.grithub
+cp /path/to/usb/grithub-config.db ~/.grithub/app.db
+```
+
+## Common Configuration Scenarios
+
+### Development Environment
+
+```bash
+grithub config
+# Enable debug mode
+# Set shorter timeout (3000ms)
+# Enable long command generation
+```
+
+### Production/CI Environment
+
+```bash
+grithub config
+# Disable debug mode
+# Set longer timeout (10000ms)
+# Skip long command generation
+
+# Use environment variables for token
+export GITHUB_TOKEN="$CI_SECRET_TOKEN"
+```
+
+### GitHub Enterprise
+
+```bash
+grithub config
+# Set API Base URL to your GHE instance
+# Increase timeout (enterprise networks)
+# Enable debug for troubleshooting
+```
+
+### Slow/Unstable Network
+
+```bash
+grithub config
+# Increase timeout to 30000ms
+# Enable debug to see retry attempts
+```
+
+## Troubleshooting
+
+### Configuration Not Persisting
+
+**Problem:** Changes don't persist after restart
+
+**Solution:**
+
+1. Check database permissions:
+
+   ```bash
+   ls -la ~/.grithub/app.db
+   chmod 600 ~/.grithub/app.db
+   ```
+
+2. Verify database isn't locked:
+   ```bash
+   lsof ~/.grithub/app.db
+   ```
+
+### Timeout Errors
+
+**Problem:** Requests timing out
+
+**Solution:**
+
+```bash
+grithub config
+# Increase timeout duration to 10000 or higher
+```
+
+### GitHub Enterprise Issues
+
+**Problem:** Commands fail with GHE
+
+**Solution:**
+
+```bash
+grithub config
+# Set correct API Base URL
+# Format: https://github.company.com/api/v3
+# Enable debug mode
+```
+
+### Reset Everything
+
+**Problem:** Configuration corrupted
+
+**Solution:**
+
+```bash
+# Remove database
+rm ~/.grithub/app.db
+
+# Re-login
+grithub login
+
+# Reconfigure
+grithub config
+```
 
 ## Best Practices
 
-1. **Use Environment Variables for CI/CD** - Set tokens via env vars in automated environments
-2. **Enable Debug Mode During Development** - Helps catch and fix issues faster
-3. **Disable Debug Mode in Production** - Keeps error messages concise
-4. **Secure Your Ngrok Token** - Don't commit tokens to version control
-5. **Adjust Timeouts as Needed** - Increase for slow networks, decrease for fast ones
+### Version Control
+
+**Don't commit:**
+
+```gitignore
+# .gitignore
+.grithub/
+*.db
+```
+
+**Do document:**
+
+```markdown
+# README.md
+
+## Required Configuration
+
+1. Run `grithub login`
+2. Run `grithub set-repo owner/repo`
+3. Set debug mode if needed
+```
+
+### Team Settings
+
+For consistent team configuration:
+
+```bash
+# scripts/setup-grithub.sh
+#!/bin/bash
+
+grithub login
+grithub set-repo company/project
+grithub config # Then manually set team standards
+```
+
+### CI/CD Settings
+
+Always use environment variables in CI:
+
+```yaml
+# .github/workflows/grithub.yml
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GITHUB_API_URL: ${{ secrets.GHE_API_URL }}
+  GRITHUB_DEBUG: false
+```
 
 ## Next Steps
 
-- Set up [Webhook Testing](/guide/webhook-testing) with ngrok
-- Explore available [Commands](/guide/commands)
-- Learn about [Troubleshooting](/guide/troubleshooting) common issues
+- [Authentication](/guide/authentication) - Set up login
+- [Commands](/guide/commands) - Available commands
+- [Quick Start](/guide/quick-start) - Start using Grithub

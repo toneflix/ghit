@@ -2,10 +2,10 @@ import { Logger, LoggerChalk } from '@h3ravel/shared'
 import { XCommand, XGeneric, XSchema } from './Contracts/Generic.js'
 
 import { IIssue } from './Contracts/Interfaces'
-import { existsSync } from 'fs'
-import { fileURLToPath } from 'url'
-import path from 'path'
-import readline from 'readline/promises'
+import { existsSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import path from 'node:path'
+import readline from 'node:readline/promises'
 import { useOctokit } from './hooks'
 
 const __filename = fileURLToPath(import.meta.url)

@@ -32,6 +32,7 @@ export interface IConfig {
     apiBaseURL: string
     timeoutDuration: number
     ngrokAuthToken?: string
+    skipLongCommandGeneration?: boolean
 }
 
 export interface IRepoEntry {

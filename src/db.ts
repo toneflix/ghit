@@ -1,18 +1,16 @@
-import path, { dirname } from 'path'
-
 import Database from 'better-sqlite3'
 import { XGeneric } from './Contracts/Generic'
-import { fileURLToPath } from 'url'
+import { homedir } from 'os'
 import { mkdirSync } from 'fs'
+import path from 'path'
 
 let db: Database.Database
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-const dirPath = path.normalize(path.join(__dirname, '..', 'data'))
-mkdirSync(dirPath, { recursive: true })
+const dbPath = path.join(homedir(), '.grithub')
+
+mkdirSync(dbPath, { recursive: true })
 
 
-export const useDbPath = () => [dirPath] as const
+export const useDbPath = () => [dbPath] as const
 
 /**
  * Hook to get or set the database instance.
@@ -36,7 +34,7 @@ export const useDb = () => {
 
 const [getDatabase, setDatabase] = useDb()
 
-setDatabase(new Database(path.join(dirPath, 'app.db')))
+setDatabase(new Database(path.join(dbPath, 'app.db')))
 
 /**
  * Initialize the database

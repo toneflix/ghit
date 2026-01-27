@@ -5,7 +5,7 @@ import { Command } from '@h3ravel/musket'
 
 export class ConfigCommand extends Command {
     protected signature = 'config'
-    protected description = 'Configure paystack cli'
+    protected description = 'Configure Grithub'
 
     async handle () {
         const [_, setCommand] = useCommand()
@@ -17,12 +17,16 @@ export class ConfigCommand extends Command {
             config = {
                 debug: false,
                 apiBaseURL: 'https://api.github.com',
-                timeoutDuration: 3000
+                timeoutDuration: 3000,
+                skipLongCommandGeneration: true,
             }
             setConfig(config)
         }
 
-        const choice = await this.choice('Select configuration to set', configChoices(config))
+        const choice = await this.choice(
+            'Select configuration to set',
+            configChoices(config)
+        )
 
         await saveConfig(choice as keyof typeof config)
 

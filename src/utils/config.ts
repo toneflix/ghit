@@ -1,6 +1,7 @@
 import { useCommand, useConfig } from '../hooks'
 
 import { IConfig } from '../Contracts/Interfaces'
+import { logger } from 'src/helpers'
 
 export const configChoices = (config: IConfig) => {
     return [
@@ -18,6 +19,11 @@ export const configChoices = (config: IConfig) => {
             name: 'Timeout Duration',
             value: 'timeoutDuration',
             description: `Set the timeout duration for API requests (${config.timeoutDuration} ms)`
+        },
+        {
+            name: 'Skip Long Command Generation',
+            value: 'skipLongCommandGeneration',
+            description: `Enable or disable skipping of long command generation when calling ${logger('generate:apis', ['grey', 'italic'])} (${config.skipLongCommandGeneration ? 'Enabled' : 'Disabled'})`
         },
         {
             name: 'Ngrok Auth Token',
@@ -51,11 +57,18 @@ export const saveConfig = async (choice: keyof IConfig) => {
     } else if (choice === 'timeoutDuration') {
         const timeoutDuration = await command().ask('Enter Timeout Duration (in ms)', config.timeoutDuration.toString())
         config.timeoutDuration = parseInt(timeoutDuration)
+    } else if (choice === 'skipLongCommandGeneration') {
+        const skipLongCommandGeneration = await command()
+            .confirm(
+                `${config.skipLongCommandGeneration ? 'Dis' : 'En'}able skipping of long command generation?`, config.skipLongCommandGeneration === true
+            )
+        config.skipLongCommandGeneration = skipLongCommandGeneration
     } else if (choice === 'reset') {
         config = {
             debug: false,
             apiBaseURL: 'https://api.github.com',
-            timeoutDuration: 3000
+            timeoutDuration: 3000,
+            skipLongCommandGeneration: true,
         }
     }
 

@@ -5,19 +5,34 @@ import APIs from '../github/apis'
 import { Command } from '@h3ravel/musket'
 import { IRepoEntry } from 'src/Contracts/Interfaces'
 import { buildSignature } from 'src/utils/argument'
+import { createRequire } from 'node:module'
 import { dataRenderer } from '../utils/renderer'
+import { existsSync } from 'node:fs'
+import path from 'node:path'
 import { read } from '../db'
 import { useCommand } from '../hooks'
 
 export default () => {
+    const require = createRequire(import.meta.url)
     const commands: typeof Command[] = []
+    let GeneratedAPIs = APIs
+
+    const isGeneratingApis = process.argv.includes('generate:apis')
+
+    if (!isGeneratingApis &&
+        existsSync(path.join(process.cwd(), '.grithub/apis.generated.js'))
+    ) {
+        ({ APIs: GeneratedAPIs } = require(
+            path.join(process.cwd(), '.grithub/apis.generated.js')
+        ))
+    }
 
     /**
      * We should map through the APIs and reduce all apis to a single key value pair
      * where key is the API key and the schema array entry api propety separated by a 
      * semicolon and the value is schema array entry.
      */
-    const entries = Object.entries(APIs).reduce((acc, [key, schemas]) => {
+    const entries = Object.entries(GeneratedAPIs).reduce((acc, [key, schemas]) => {
         schemas.forEach((schema) => {
             const commandKey = key === schema.api ? key : `${key}:${(schema.alias ?? schema.api).toKebabCase()}`
             acc[commandKey] = schema

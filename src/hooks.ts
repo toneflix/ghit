@@ -35,7 +35,8 @@ export function useConfig () {
             return read('config') || {
                 debug: false,
                 apiBaseURL: 'https://api.github.com',
-                timeoutDuration: 3000
+                timeoutDuration: 3000,
+                skipLongCommandGeneration: true,
             }
         },
         (config: IConfig): IConfig => {

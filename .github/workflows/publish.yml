@@ -46,8 +46,8 @@ jobs:
           CURRENT_VERSION=$(node -p "require('./package.json').version")
           echo "Current package.json version: $CURRENT_VERSION"
 
-          # Get published version from npm (suppress errors if package doesn't exist)
-          PUBLISHED_VERSION=$(npm view @toneflix/paystack-cli version 2>/dev/null || echo "0.0.0")
+          # Get published version from npm (suppress err  ors if package doesn't exist)
+          PUBLISHED_VERSION=$(npm view @toneflix/grithub version 2>/dev/null || echo "0.0.0")
           echo "Published npm version: $PUBLISHED_VERSION"
 
           # Function to compare versions

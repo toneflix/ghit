@@ -1,158 +1,343 @@
 # Authentication
 
-Learn how to authenticate and manage sessions with Paystack CLI.
+Grithub uses GitHub OAuth for secure authentication, storing your credentials locally for persistent access.
 
-## Login
+## Overview
 
-The CLI uses your Paystack account credentials for authentication:
+Authentication in Grithub:
 
-```bash
-paystack-cli login
-```
+- Uses GitHub's OAuth flow
+- Stores token locally in SQLite database
+- Supports personal access tokens
+- Automatically includes token in all API requests
 
-### Login Process
+## Login Process
 
-When you run the login command, you'll be prompted for:
+### Interactive Login
 
-1. **Email Address** - Your Paystack account email
-2. **Password** - Your Paystack account password
-3. **Remember Email** - Option to save your email for faster future logins
-
-```bash
-$ paystack-cli login
-Email address: john@example.com
-Password: ********
-Remember Email Address? (yes/no): yes
-```
-
-### Integration Selection
-
-If your account has multiple integrations (businesses), you'll be prompted to select which one to use:
+The simplest way to authenticate:
 
 ```bash
-Select an integration:
-1. My Business (test)
-2. Another Business (live)
-```
-
-The selected integration will be used for all subsequent API calls.
-
-## Session Management
-
-### Automatic Session Handling
-
-Once logged in, the CLI automatically manages your session:
-
-- Session tokens are securely stored in a local SQLite database
-- Tokens are automatically included in all API requests
-- You don't need to manually handle authentication for each command
-
-### Session Expiration
-
-Sessions automatically expire after the token timeout period. When your session expires:
-
-```bash
-ERROR: Your session has expired. Please run the `login` command to sign in again.
-```
-
-Simply run `paystack-cli login` again to re-authenticate.
-
-### Checking Session Status
-
-Your session is automatically validated before each API call. If you're not logged in, you'll see:
-
-```bash
-ERROR: You're not signed in, please run the login command before you begin
-```
-
-## Logout
-
-To clear your session and logout:
-
-```bash
-paystack-cli logout
+grithub login
 ```
 
 This will:
 
-- Remove your authentication token
-- Clear the selected integration
-- Require you to login again before making API calls
+1. Open your default browser
+2. Redirect to GitHub's OAuth authorization page
+3. Request necessary permissions
+4. Redirect back with authorization code
+5. Exchange code for access token
+6. Store token securely
+7. Prompt you to select a default repository
 
-## Security
+### What Happens During Login
 
-### Local Storage
+```bash
+$ grithub login
 
-The CLI stores authentication data locally in a SQLite database located at:
+Please open the following URL in your browser to authenticate: https://github.com/login/device
+Press Enter to open your browser, or  Ctrl+C  to cancel
 
-```sh
-<project-root>/app.db
+✔ Authorization successful
+
+? Select default repository
+❯ 3m1n3nc3/3m1n3nc3
+  3m1n3nc3/AISAPI
+  3m1n3nc3/Alisimbi
+  3m1n3nc3/alisimbiPhp
+  3m1n3nc3/awesome-php
+  3m1n3nc3/bahin-markpoint
+  3m1n3nc3/Breeze-Investment
+
+↑↓ navigate • ⏎ select
 ```
 
-This file contains:
+## Required Permissions
 
-- Your authentication token
-- User information
-- Selected integration details
-- Configuration settings
+Grithub requests these OAuth scopes:
 
-::: warning
-Keep your `app.db` file secure and never commit it to version control.
+- `repo` - Full control of private repositories
+  - Read and write access to code
+  - Read and write access to issues
+  - Read and write access to pull requests
+- `user` - Read user profile data
+- `write:org` - Read and write org and team membership (optional)
+
+::: info
+You can review and revoke access anytime at [GitHub Settings → Applications](https://github.com/settings/applications).
 :::
 
-### Best Practices
+## Token Storage
 
-1. **Use Test Mode** - Start with test mode integrations for development
-2. **Logout When Done** - Run `logout` on shared machines
-3. **Secure Your Database** - Keep `app.db` file permissions restricted
-4. **Don't Share Tokens** - Never share your authentication token or database file
+### Location
 
-## Switching Integrations
+Tokens are stored in an SQLite database that contains:
 
-To switch between integrations:
+- Authentication token
+- User profile information
+- Default repository settings
+- Configuration preferences
 
-1. Logout from the current session:
+### Security
 
-   ```bash
-   paystack-cli logout
-   ```
+- Database file has restricted permissions (user-only access)
+- Tokens are stored as-is (not encrypted in database)
+- File system permissions protect the token
+- Never committed to version control
 
-2. Login again and select a different integration:
-   ```bash
-   paystack-cli login
-   ```
+## Checking Authentication Status
+
+Verify you're logged in:
+
+```bash
+grithub info
+```
+
+Output includes:
+
+```bash
+✓ Application Information Loaded.
+
+┌─────────────────────-───┬──────────────────────────┐
+│ Key                     │ Value                    │
+├──────────────────────-──┼──────────────────────────┤
+│ App Version             │ 0.1.6                    │
+│ Platform                │ darwin                   │
+│ CPUs                    │ 8                        │
+│ Host                    │ username@Machine.host    │
+│ Github User             │ youruser (ID: xxxxxxxx)  │
+│ Default Repo            │ toneflix-forks/dummy     │
+└───────────────────────-─┴──────────────────────────┘
+```
+
+## Logout
+
+Revoke local access:
+
+```bash
+grithub logout
+```
+
+This will:
+
+1. Clear stored token from database
+2. Remove user profile data
+3. Keep configuration settings
+4. Preserve default repository preference
+
+::: tip
+Logout only removes local credentials. To fully revoke access, also revoke the OAuth app at [GitHub Settings](https://github.com/settings/applications).
+:::
+
+## Re-authentication
+
+If your token expires or is revoked:
+
+```bash
+# You'll see authentication errors
+ERROR: You're not signed in, please run the [login] command
+
+# Simply login again
+grithub logout
+grithub login
+```
+
+## Personal Access Tokens (Alternative)
+
+For CI/CD or automated workflows, use personal access tokens:
+
+### Generate Token
+
+1. Go to [GitHub Settings → Developer Settings → Personal Access Tokens](https://github.com/settings/tokens)
+2. Click "Generate new token (classic)"
+3. Select scopes: `repo`, `user`, `write:org`
+4. Generate and copy token
+
+### Use Token
+
+Set as environment variable:
+
+```bash
+export GITHUB_TOKEN="ghp_your_token_here"
+grithub issues:list
+```
+
+Or configure directly:
+
+```bash
+grithub config
+# Select "Token" option
+# Paste your token
+```
+
+## Multiple Accounts
+
+To switch between GitHub accounts:
+
+```bash
+# Logout of current account
+grithub logout
+
+# Login with different account
+grithub login
+```
+
+::: info
+Grithub doesn't support multiple simultaneous accounts. You must logout and re-login to switch.
+:::
+
+## Authentication in Scripts
+
+For automated scripts:
+
+### Option 1: Environment Variable
+
+```bash
+#!/bin/bash
+export GITHUB_TOKEN="$YOUR_TOKEN"
+grithub issues:create --title "Automated issue"
+```
+
+### Option 2: Pre-authenticated Session
+
+```bash
+#!/bin/bash
+# Login once
+grithub login
+
+# Run multiple commands
+grithub issues:create --title "Issue 1"
+grithub issues:create --title "Issue 2"
+```
+
+## CI/CD Integration
+
+### GitHub Actions
+
+```yaml
+name: Create Issue
+
+on:
+  workflow_dispatch:
+
+jobs:
+  create:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Grithub
+        run: npm install -g @toneflix/grithub
+
+      - name: Create Issue
+        run: grithub issues:create --title "Automated"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
+
+### Other CI Platforms
+
+```bash
+# Set token from CI secrets
+export GITHUB_TOKEN="$CI_GITHUB_TOKEN"
+
+# Run commands
+grithub issues:seed ./issues
+```
 
 ## Troubleshooting
 
-### "You're not signed in" Error
-
-**Solution:** Run the login command first
+### "Not signed in" Error
 
 ```bash
-paystack-cli login
+ERROR: You're not signed in, please run the [login] command
 ```
 
-### "Session expired" Error
-
-**Solution:** Your session has timed out, login again
+**Solution:**
 
 ```bash
-paystack-cli logout
-paystack-cli login
+grithub login
 ```
 
-### Can't Login
+### "Token expired" Error
 
-**Possible causes:**
+**Solution:**
 
-- Incorrect email or password
-- Network connectivity issues
-- Paystack API is down
+```bash
+grithub logout
+grithub login
+```
 
-**Solution:** Verify your credentials and try again
+### "Insufficient permissions" Error
+
+**Solution:**
+
+1. Logout: `grithub logout`
+2. Revoke app at [GitHub Settings](https://github.com/settings/applications)
+3. Login again: `grithub login` (re-authorize with required scopes)
+
+### Browser Doesn't Open
+
+**Solution:**
+
+Manually copy the URL from terminal:
+
+```bash
+$ grithub login
+Opening browser to: https://github.com/login/oauth/authorize?...
+
+# Copy URL and paste in browser
+```
+
+### Database Locked Error
+
+**Solution:**
+
+Ensure no other Grithub instances are running:
+
+```bash
+# Check for running processes
+ps aux | grep grithub
+
+# Kill if needed
+kill -9 <PID>
+
+# Try again
+grithub login
+```
+
+## Security Best Practices
+
+### Protect Your Token
+
+- Never commit tokens to version control
+- Use environment variables in shared scripts
+- Regularly rotate tokens
+
+### Limit Token Scope
+
+Only grant necessary permissions:
+
+- Personal projects: `repo` scope only
+- Organization work: Add `write:org`
+- Public repos only: Use `public_repo` instead of `repo`
+
+### Audit Token Usage
+
+Regularly review:
+
+1. [GitHub Settings → Applications](https://github.com/settings/applications)
+2. Check last used date
+3. Revoke unused tokens
+4. Regenerate if suspicious activity
+
+### Use Different Tokens
+
+- Personal computer: OAuth flow
+- CI/CD: Dedicated personal access token
+- Shared servers: Service account tokens
 
 ## Next Steps
 
-- Learn about [Configuration](/guide/configuration) options
-- Explore available [Commands](/guide/commands)
-- Start using the [API](/api/transactions)
+- [Configuration](/guide/configuration) - Customize Grithub settings
+- [Commands](/guide/commands) - Learn available commands
+- [Quick Start](/guide/quick-start) - Start using authenticated features

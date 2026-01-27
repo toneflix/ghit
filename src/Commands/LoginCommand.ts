@@ -10,7 +10,7 @@ import { promiseWrapper } from 'src/helpers'
 
 export class LoginCommand extends Command {
     protected signature = 'login'
-    protected description = 'Log in to paystack cli'
+    protected description = 'Log in to Grithub'
 
     async handle () {
         const [_, setCommand] = useCommand()

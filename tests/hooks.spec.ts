@@ -1,6 +1,6 @@
 import { Command, Kernel } from '@h3ravel/musket'
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
-import { init, useDb } from 'src/db'
+import { init, useDb } from '../src/db'
 import { useCommand, useConfig, useShortcuts } from '../src/hooks'
 
 import Database from 'better-sqlite3'
@@ -20,7 +20,7 @@ beforeAll(async () => {
     program = await Kernel.init(
         app,
         {
-            packages: ['toneflix/paystack-cli'],
+            packages: ['toneflix/grithub'],
             skipParsing: true,
             name: 'musket-cli',
             discoveryPaths: [path.join(process.cwd(), 'src/Commands/*.ts')]

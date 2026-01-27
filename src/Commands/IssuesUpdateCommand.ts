@@ -13,10 +13,11 @@ import { useCommand } from 'src/hooks'
 export class IssuesUpdateCommand extends Command {
     protected signature = `issues:update
         {directory=issues : The directory containing issue files to seed from.}
+        {--r|repo? : The repository to seed issues into. If not provided, the default repository will be used.}
         {--dry-run : Simulate the deletion without actually deleting issues.}
     `
 
-    protected description = 'Seed the database with issues from a preset directory.'
+    protected description = 'Seed the database with updated issues from a preset directory.'
 
     async handle () {
         const [_, setCommand] = useCommand()
@@ -34,7 +35,7 @@ export class IssuesUpdateCommand extends Command {
         const seeder = new IssuesSeeder()
 
         try {
-            const usernameRepo = (repo.full_name.split('/') ?? ['', '']) as [string, string]
+            const usernameRepo = (this.option('repo', repo.full_name).split('/') ?? ['', '']) as [string, string]
             // Check network connectivity first
             await seeder.checkConnectivity()
 

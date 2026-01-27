@@ -1,20 +1,49 @@
 #!/usr/bin/env node
-import path, { dirname } from "path";
-import Database from "better-sqlite3";
-import { fileURLToPath } from "url";
-import { mkdirSync } from "fs";
+import { createRequire } from "node:module";
 import { Logger } from "@h3ravel/shared";
-import axios from "axios";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import path, { dirname, join } from "node:path";
+import readline from "node:readline/promises";
+import Database from "better-sqlite3";
+import os, { homedir, type } from "os";
+import fs, { mkdirSync as mkdirSync$1 } from "fs";
+import path$1, { join as join$1 } from "path";
+import { Octokit } from "@octokit/rest";
 import { Command, Kernel } from "@h3ravel/musket";
-import ora from "ora";
-import crypto from "crypto";
-import ngrok from "@ngrok/ngrok";
+import diff from "fast-diff";
+import { installPackage } from "@antfu/install-pkg";
+import Table from "cli-table3";
+import { createRequire as createRequire$1 } from "module";
+import dns from "dns/promises";
+import { createDeviceCode, exchangeDeviceCode } from "@octokit/oauth-methods";
+import open, { apps } from "open";
+import "dotenv/config";
+import axios from "axios";
 
+//#region src/utils/global.ts
+String.prototype.toKebabCase = function() {
+	return this.replace(/([a-z])([A-Z])/g, "$1-$2").replace(/[\s_]+/g, "-").toLowerCase();
+};
+String.prototype.toCamelCase = function() {
+	return this.replace(/[-_ ]+([a-zA-Z0-9])/g, (_, c) => c.toUpperCase()).replace(/^[A-Z]/, (c) => c.toLowerCase());
+};
+String.prototype.toPascalCase = function() {
+	return this.replace(/(^\w|[-_ ]+\w)/g, (match) => match.replace(/[-_ ]+/, "").toUpperCase());
+};
+String.prototype.toSnakeCase = function() {
+	return this.replace(/([a-z])([A-Z])/g, "$1_$2").replace(/[\s-]+/g, "_").toLowerCase();
+};
+String.prototype.toTitleCase = function() {
+	return this.toLowerCase().replace(/(^|\s)\w/g, (match) => match.toUpperCase());
+};
+
+//#endregion
 //#region src/db.ts
 let db;
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const dirPath = path.normalize(path.join(__dirname, "..", "data"));
-mkdirSync(dirPath, { recursive: true });
+const dbPath = path$1.join(homedir(), ".grithub");
+mkdirSync$1(dbPath, { recursive: true });
+const useDbPath = () => [dbPath];
 /**
 * Hook to get or set the database instance.
 * 
@@ -28,7 +57,7 @@ const useDb = () => {
 	}];
 };
 const [getDatabase, setDatabase] = useDb();
-setDatabase(new Database(path.join(dirPath, "app.db")));
+setDatabase(new Database(path$1.join(dbPath, "app.db")));
 /**
 * Initialize the database
 * 
@@ -112,11 +141,12 @@ function useConfig() {
 	return [() => {
 		return read("config") || {
 			debug: false,
-			apiBaseURL: "https://api.paystack.co",
-			timeoutDuration: 3e3
+			apiBaseURL: "https://api.github.com",
+			timeoutDuration: 3e3,
+			skipLongCommandGeneration: true
 		};
-	}, (config) => {
-		write("config", config);
+	}, (config$1) => {
+		write("config", config$1);
 		return read("config");
 	}];
 }
@@ -137,155 +167,56 @@ function useShortcuts() {
 		return true;
 	}];
 }
-
-//#endregion
-//#region src/axios.ts
-const api = axios.create({
-	baseURL: "https://api.paystack.co",
-	headers: { "Content-Type": "application/json" }
-});
 /**
-* Initialize Axios with configuration from the application settings.
-*/
-const initAxios = () => {
-	const [getConfig] = useConfig();
-	const config = getConfig();
-	api.defaults.baseURL = config.apiBaseURL || "https://api.paystack.co";
-	api.defaults.timeout = config.timeoutDuration || 3e3;
-};
-/**
-* Log the full request details if we are not in production
-* @param config 
-* @returns 
-*/
-const logInterceptor = (config) => {
-	const [getConfig] = useConfig();
-	const [command] = useCommand();
-	const conf = getConfig();
-	const v = command().getVerbosity();
-	if (conf.debug || v > 1) {
-		console.log("Error Response URL:", axios.getUri(config));
-		if (conf.debug || v >= 2) {
-			console.log("Request URL:", config.url);
-			console.log("Request Method:", config.method);
-		}
-		if (conf.debug || v == 3) {
-			console.log("Request Headers:", config.headers);
-			console.log("Request Data:", config.data);
-		}
-	}
-	return config;
-};
-/**
-* Log only the relevant parts of the response if we are in not in production
+* Hook to get an authenticated Octokit instance.
 * 
-* @param response 
 * @returns 
 */
-const logResponseInterceptor = (response) => {
-	const [getConfig] = useConfig();
-	const [command] = useCommand();
-	const conf = getConfig();
-	const v = command().getVerbosity();
-	if (conf.debug || v > 1) {
-		const { data, status, statusText, headers } = response;
-		console.log("Error Response URL:", axios.getUri(response.config));
-		if (conf.debug || v >= 2) {
-			console.log("Response Data:", data);
-			console.log("Response Status:", status);
-		}
-		if (conf.debug || v === 3) {
-			console.log("Response Status Text:", statusText);
-			console.log("Response Headers:", headers);
-		}
-	}
-	return response;
+const useOctokit = () => {
+	const token = read("token");
+	if (!token) throw new Error("No authentication token found. Please log in first.");
+	return new Octokit({ auth: token });
 };
-const logResponseErrorInterceptor = (error) => {
-	const [getConfig] = useConfig();
-	const [command] = useCommand();
-	const conf = getConfig();
-	const v = command().getVerbosity();
-	if (conf.debug || v > 1) if (error.response) {
-		const { data, status, headers } = error.response;
-		console.log("Error Response URL:", axios.getUri(error.config));
-		if (conf.debug || v >= 2) {
-			console.log("Error Response Data:", data);
-			console.log("Error Response Status:", status);
-		}
-		if (conf.debug || v === 3) console.log("Error Response Headers:", headers);
-	} else console.log("Error Message:", error.message);
-	return Promise.reject(error);
-};
-api.interceptors.request.use(logInterceptor, (error) => Promise.reject(error));
-api.interceptors.response.use(logResponseInterceptor, logResponseErrorInterceptor);
-var axios_default = api;
 
 //#endregion
 //#region src/helpers.ts
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+/**
+* Wrap a promise to return a tuple of error and result
+* 
+* @param promise 
+* @returns 
+*/
 const promiseWrapper = (promise) => promise.then((data) => [null, data]).catch((error) => [typeof error === "string" ? error : error.message, null]);
-function isJson(val) {
-	return val instanceof Array || val instanceof Object ? true : false;
+/**
+* Execute a schema
+* 
+* @param schema 
+* @param options 
+* @returns 
+*/
+async function executeSchema(root, schema, args) {
+	const octokit = useOctokit();
+	const { data, message } = await Reflect.apply(octokit[root][schema.api], octokit[root], [args]);
+	if (!data || Array.isArray(data) && data.length < 1 || data instanceof Object && Object.keys(data).length < 1) return {
+		data: null,
+		message: message ?? "Request was successful but returned no data.",
+		status: false
+	};
+	return {
+		data,
+		message: message ?? "Request Completed",
+		status: true
+	};
 }
-function parseURL(uri) {
-	if (!uri.startsWith("http")) uri = "http://" + uri;
-	return new URL(uri);
-}
-function getKeys$1(token, type = "secret", domain = "test") {
-	return new Promise((resolve, reject) => {
-		axios_default.get("/integration/keys", { headers: {
-			Authorization: "Bearer " + token,
-			"jwt-auth": true
-		} }).then((response) => {
-			let key = {};
-			const keys = response.data.data;
-			if (keys.length) {
-				for (let i = 0; i < keys.length; i++) if (keys[i].domain === domain && keys[i].type === type) {
-					key = keys[i];
-					break;
-				}
-			}
-			resolve(key.key);
-		}).catch((error) => {
-			if (error.response) {
-				reject(error.response.data.message);
-				return;
-			}
-			reject(error);
-		});
-	});
-}
-async function executeSchema(schema, options) {
-	let domain = "test";
-	if (options.domain) domain = options.domain;
-	const key = await getKeys$1(read("token"), "secret", domain);
-	const [getConfig] = useConfig();
-	const config = getConfig();
-	return new Promise((resolve, reject) => {
-		let params = {}, data = {};
-		if (schema.method == "GET") params = options;
-		if (schema.method == "POST") data = options;
-		const pathVars = [...schema.endpoint.matchAll(/\{([^}]+)\}/g)].map((match) => match[1]);
-		if (pathVars.length >= 0) for (const path$1 of pathVars) schema.endpoint = schema.endpoint.replace("{" + path$1 + "}", options[path$1]);
-		const url = new URL(schema.endpoint, config.apiBaseURL || "https://api.paystack.co");
-		params = {
-			...params,
-			...Object.fromEntries(url.searchParams.entries())
-		};
-		axios_default.request({
-			url: url.pathname,
-			method: schema.method,
-			params,
-			data,
-			timeout: config.timeoutDuration || 0,
-			headers: { Authorization: "Bearer " + key }
-		}).then(({ data: data$1 }) => {
-			resolve(data$1);
-		}).catch((err) => {
-			reject(err.response?.data?.message ?? err.response?.message ?? err.message ?? err.statusText);
-		});
-	});
-}
+/**
+* Wait for a specified number of milliseconds
+* 
+* @param ms 
+* @param callback 
+* @returns 
+*/
 const wait = (ms, callback) => {
 	return new Promise((resolve) => {
 		setTimeout(() => {
@@ -294,2104 +225,189 @@ const wait = (ms, callback) => {
 		}, ms);
 	});
 };
-const logger = (str, config = ["green", "italic"]) => {
-	return Logger.log(str, config, false);
+/**
+* Logger helper
+* 
+* @param str 
+* @param config 
+* @returns 
+*/
+const logger = (str, config$1 = ["green", "italic"], log) => {
+	return Logger.log(str, config$1, log ?? false);
+};
+const viewIssue = (issue) => {
+	Logger.log([
+		["Title:", ["white", "bold"]],
+		[issue.title, ["blue"]],
+		["\nType:", ["white", "bold"]],
+		[typeof issue.type === "string" ? issue.type : issue.type?.name ?? "N/A", ["blue"]],
+		["\nNumber:", ["white", "bold"]],
+		[String(issue.number), ["blue"]],
+		["\nState:", ["white", "bold"]],
+		[issue.state, ["blue"]],
+		["\nLabels:", ["white", "bold"]],
+		[issue.labels.map((l) => l.name ?? l).join(", "), ["blue"]],
+		["\nAssignees:", ["white", "bold"]],
+		[issue.assignees?.map((a) => a.login ?? a).join(", ") || "N/A", ["blue"]],
+		["\nCreated at:", ["white", "bold"]],
+		[new Date(issue.created_at).toLocaleString(), ["blue"]],
+		["\nUpdated at:", ["white", "bold"]],
+		[new Date(issue.updated_at).toLocaleString(), ["blue"]]
+	], " ");
+};
+/**
+* Find the nearest package.json file
+* 
+* @param startDir 
+* @returns 
+*/
+const findCLIPackageJson = (startDir = __dirname) => {
+	let dir = startDir;
+	while (true) {
+		const pkgPath = path.join(dir, "package.json");
+		if (existsSync(pkgPath)) return pkgPath;
+		const parent = path.dirname(dir);
+		if (parent === dir) break;
+		dir = parent;
+	}
+	return null;
+};
+/**
+* Wait for the user to press Enter
+* 
+* @param onEnter 
+*/
+const waitForEnter = async (onEnter) => {
+	const rl = readline.createInterface({
+		input: process.stdin,
+		output: process.stdout
+	});
+	await rl.question("");
+	onEnter();
+	rl.close();
 };
 
 //#endregion
-//#region src/paystack/apis.ts
+//#region src/github/apis.ts
 const APIs = {
-	subaccount: [
-		{
-			api: "update",
-			endpoint: "https://api.paystack.co/subaccount",
-			method: "PUT",
-			params: [],
-			description: "Update a subaccount"
-		},
-		{
-			api: "fetch",
-			endpoint: "https://api.paystack.co/subaccount/{id}",
-			method: "GET",
-			params: [{
-				parameter: "id",
-				required: true,
-				type: "String",
-				description: "The ID of the subaccount to fetch",
-				paramType: "path"
-			}],
-			description: "Fetch a specific subaccount"
-		},
-		{
-			api: "list",
-			endpoint: "https://api.paystack.co/subaccount",
-			method: "GET",
-			params: [{
-				parameter: "perPage",
-				required: false,
-				type: "String",
-				description: "Specify how many records you want to retrieve per page"
-			}, {
-				parameter: "page",
-				required: false,
-				type: "Number",
-				description: "Specify exactly what page you want to retrieve"
-			}],
-			description: "List all sub accounts created on your integration "
-		},
+	issues: [
 		{
 			api: "create",
-			endpoint: "https://api.paystack.co/subaccount",
-			method: "POST",
+			alias: void 0,
+			endpoint: "/repos/{owner}/{repo}/issues",
+			description: "Create an issue",
 			params: [
 				{
-					parameter: "business_name",
+					parameter: "title",
 					required: true,
 					type: "String",
-					description: "Name of business for subaccount"
+					description: "The title of the issue",
+					paramType: "body",
+					flag: true
 				},
 				{
-					parameter: "settlement_bank",
-					required: true,
-					type: "String",
-					description: "Bank code (see List Banks endpoint for accepted codes)"
-				},
-				{
-					parameter: "account_number",
-					required: true,
-					type: "String",
-					description: "NUBAN bank account number"
-				},
-				{
-					parameter: "percentage_charge",
-					required: true,
-					type: "String",
-					description: "Default percentage charged when receiving on behalf of this subaccount"
-				},
-				{
-					parameter: "primary_contact_email",
+					parameter: "body",
 					required: false,
 					type: "String",
-					description: "Contact email for the subaccount"
+					description: "The contents of the issue",
+					paramType: "body",
+					flag: true
 				},
 				{
-					parameter: "primary_contact_name",
+					parameter: "owner",
 					required: false,
 					type: "String",
-					description: "Contact person name for this subaccount"
+					description: "The account owner of the repository",
+					paramType: "path",
+					arg: true
 				},
 				{
-					parameter: "primary_contact_phone",
+					parameter: "repo",
 					required: false,
 					type: "String",
-					description: "Contact phone number for this subaccount"
-				},
-				{
-					parameter: "metadata",
-					required: false,
-					type: "String",
-					description: "Additional information in structured JSON format"
-				},
-				{
-					parameter: "settlement_schedule",
-					required: false,
-					type: "String",
-					description: "Settlement schedule: \"auto\" (T+1), \"weekly\", \"monthly\", or \"manual\""
+					description: "The name of the repository",
+					paramType: "path",
+					arg: true
 				}
-			],
-			description: "Create a new subaccount"
-		}
-	],
-	page: [
+			]
+		},
 		{
-			api: "update",
-			endpoint: "https://api.paystack.co/page/",
-			method: "PUT",
+			api: "listForRepo",
+			alias: "list",
+			endpoint: "/repos/{owner}/{repo}/issues",
+			description: "List repository issues",
 			params: [
 				{
-					parameter: "name",
+					parameter: "owner",
 					required: false,
 					type: "String",
-					description: "Name of page"
-				},
-				{
-					parameter: "description",
-					required: false,
-					type: "String",
-					description: "Short description of page"
-				},
-				{
-					parameter: "amount",
-					required: false,
-					type: "Number",
-					description: "Amount to be charged in kobo. Will override the amount for existing subscriptions"
-				},
-				{
-					parameter: "active",
-					required: false,
-					type: "String",
-					description: "Set to false to deactivate page url"
-				}
-			],
-			description: "Update a payment page"
-		},
-		{
-			api: "fetch",
-			endpoint: "https://api.paystack.co/page/id_or_plan_code",
-			method: "GET",
-			params: [],
-			description: "Fetch a specific payment page"
-		},
-		{
-			api: "list",
-			endpoint: "https://api.paystack.co/page",
-			method: "GET",
-			params: [
-				{
-					parameter: "perPage",
-					required: false,
-					type: "String",
-					description: "Specify how many records you want to retrieve per page"
-				},
-				{
-					parameter: "page",
-					required: false,
-					type: "Number",
-					description: "Specify exactly what page you want to retrieve"
-				},
-				{
-					parameter: "interval",
-					required: false,
-					type: "String",
-					description: "Filter list by plans with specified interval"
-				},
-				{
-					parameter: "amount",
-					required: false,
-					type: "Number",
-					description: "Filter list by plans with specified amount (in kobo)"
-				}
-			],
-			description: "List all payment pages"
-		},
-		{
-			api: "check",
-			endpoint: "https://api.paystack.co/page/check_slug_availability/slug",
-			method: "GET",
-			params: [{
-				parameter: "slug",
-				required: true,
-				type: "String",
-				description: "URL slug to be confirmed"
-			}],
-			description: "Check if a page slug is available"
-		},
-		{
-			api: "create",
-			endpoint: "https://api.paystack.co/page",
-			method: "POST",
-			params: [
-				{
-					parameter: "name",
-					required: true,
-					type: "String",
-					description: "Name of page"
-				},
-				{
-					parameter: "description",
-					required: false,
-					type: "String",
-					description: "Short description of page"
-				},
-				{
-					parameter: "amount",
-					required: false,
-					type: "Number",
-					description: "Default amount to accept using this page (leave empty for donations)"
-				},
-				{
-					parameter: "slug",
-					required: false,
-					type: "String",
-					description: "URL slug for the page (page will be accessible at https://paystack.com/pay/[slug])"
-				},
-				{
-					parameter: "redirect_url",
-					required: false,
-					type: "String",
-					description: "URL to redirect to upon successful payment"
-				},
-				{
-					parameter: "send_invoices",
-					required: false,
-					type: "String",
-					description: "Set to false to disable invoice emails"
-				},
-				{
-					parameter: "custom_fields",
-					required: false,
-					type: "String",
-					description: "Custom fields to accept (see documentation for format)"
-				}
-			],
-			description: "Create a new payment page"
-		}
-	],
-	transfer: [
-		{
-			api: "list",
-			endpoint: "https://api.paystack.co/transfer",
-			method: "GET",
-			params: [{
-				parameter: "perPage",
-				required: false,
-				type: "String",
-				description: "Specify how many records you want to retrieve per page"
-			}, {
-				parameter: "page",
-				required: false,
-				type: "Number",
-				description: "Specify exactly what page you want to retrieve"
-			}],
-			description: "List all transfers"
-		},
-		{
-			api: "finalize",
-			endpoint: "https://api.paystack.co/transfer/finalize_transfer",
-			method: "POST",
-			params: [{
-				parameter: "transfer_code",
-				required: true,
-				type: "String",
-				description: "Transfer code"
-			}, {
-				parameter: "otp",
-				required: true,
-				type: "String",
-				description: "OTP sent to business phone to verify transfer"
-			}],
-			description: "Finalize a transfer by confirming OTP"
-		},
-		{
-			api: "initiate",
-			endpoint: "https://api.paystack.co/transfer",
-			method: "POST",
-			params: [
-				{
-					parameter: "source",
-					required: true,
-					type: "String",
-					description: "Where should we transfer from? Only [balance] for now"
-				},
-				{
-					parameter: "amount",
-					required: false,
-					type: "Number",
-					description: "Amount to transfer in kobo"
-				},
-				{
-					parameter: "currency",
-					required: false,
-					type: "String",
-					description: "Specify the currency of the transfer. Defaults to NGN",
-					default: "NGN",
-					options: [
-						"NGN",
-						"GHS",
-						"ZAR",
-						"KES",
-						"UGX",
-						"TZS",
-						"XAF",
-						"XOF",
-						"USD"
-					]
-				},
-				{
-					parameter: "reason",
-					required: false,
-					type: "String",
-					description: "The reason for the transfer."
-				},
-				{
-					parameter: "recipient",
-					required: true,
-					type: "String",
-					description: "Code for transfer recipient."
-				},
-				{
-					parameter: "reference",
-					required: false,
-					type: "String",
-					description: "If specified, the field should be a unique identifier (in lowercase) for the object. Only `-` `,` `_` and alphanumeric characters allowed."
-				},
-				{
-					parameter: "account_reference",
-					required: false,
-					type: "String",
-					description: "A unique identifier required in Kenya for MPESA Paybill and Till transfers."
-				}
-			],
-			description: "Send money to your customers. Status of transfer object returned will be [pending] if OTP is disabled. In the event that an OTP is required, status will read [otp]."
-		},
-		{
-			api: "verify",
-			endpoint: "https://api.paystack.co/transfer/{reference}",
-			method: "GET",
-			params: [
-				{
-					parameter: "perPage",
-					required: false,
-					type: "String",
-					description: "Specify how many records you want to retrieve per page"
-				},
-				{
-					parameter: "page",
-					required: false,
-					type: "Number",
-					description: "Specify exactly what page you want to retrieve"
-				},
-				{
-					parameter: "reference",
-					required: true,
-					type: "String",
-					description: "Transfer reference to verify",
-					paramType: "path"
-				}
-			],
-			description: "Verify transfer status by reference"
-		},
-		{
-			api: "disable",
-			endpoint: "https://api.paystack.co/transfer/disable_otp",
-			method: "POST",
-			params: [],
-			description: "Disable OTP requirement for transfers"
-		},
-		{
-			api: "enable",
-			endpoint: "https://api.paystack.co/transfer/enable_otp",
-			method: "POST",
-			params: [],
-			description: "Enable OTP requirement for transfers"
-		},
-		{
-			api: "initiate",
-			endpoint: "https://api.paystack.co/transfer/bulk",
-			method: "POST",
-			params: [{
-				parameter: "source",
-				required: false,
-				type: "String",
-				description: "Where should we transfer from? Only [balance] for now"
-			}, {
-				parameter: "transfers",
-				required: true,
-				type: "Array",
-				description: "A list of transfer object.."
-			}],
-			description: "Batch multiple transfers in a single request. You need to disable the Transfers OTP requirement to use this endpoint."
-		},
-		{
-			api: "finalize",
-			endpoint: "https://api.paystack.co/transfer/disable_otp_finalize",
-			method: "POST",
-			params: [{
-				parameter: "otp",
-				required: true,
-				type: "String",
-				description: "OTP sent to business phone to verify disabling OTP requirement"
-			}],
-			description: "Finalize disabling OTP with confirmation code"
-		},
-		{
-			api: "fetch",
-			endpoint: "https://api.paystack.co/transfer/id",
-			method: "GET",
-			params: [{
-				parameter: "id_or_code",
-				required: true,
-				type: "String",
-				description: "An ID or code for the transfer to retrieve"
-			}],
-			description: "Fetch transfer details by ID or code"
-		},
-		{
-			api: "list",
-			endpoint: "https://api.paystack.co/transfer/id_or_code",
-			method: "GET",
-			params: [{
-				parameter: "perPage",
-				required: false,
-				type: "String",
-				description: "Specify how many records you want to retrieve per page"
-			}, {
-				parameter: "page",
-				required: false,
-				type: "Number",
-				description: "Specify exactly what page you want to retrieve"
-			}],
-			description: "List all bulk charge batches"
-		},
-		{
-			api: "resend",
-			endpoint: "https://api.paystack.co/transfer/resend_otp",
-			method: "POST",
-			params: [{
-				parameter: "transfer_code",
-				required: true,
-				type: "String",
-				description: "Transfer code"
-			}, {
-				parameter: "reason",
-				required: true,
-				type: "String",
-				description: "Either \"resend_otp\" or \"transfer\""
-			}],
-			description: "Resend OTP for a transfer"
-		}
-	],
-	paymentrequest: [
-		{
-			api: "create",
-			endpoint: "https://api.paystack.co/paymentrequest",
-			method: "POST",
-			params: [
-				{
-					parameter: "customer",
-					required: true,
-					type: "String",
-					description: "Customer ID or code"
-				},
-				{
-					parameter: "due_date",
-					required: true,
-					type: "String",
-					description: "ISO 8601 representation of request due date"
-				},
-				{
-					parameter: "amount",
-					required: true,
-					type: "Number",
-					description: "Invoice amount in kobo"
-				},
-				{
-					parameter: "description",
-					required: false,
-					type: "String",
-					description: "Description of the payment request"
-				},
-				{
-					parameter: "line_items",
-					required: false,
-					type: "String",
-					description: "Array of line items"
-				},
-				{
-					parameter: "tax",
-					required: false,
-					type: "String",
-					description: "Array of taxes to be charged"
-				},
-				{
-					parameter: "currency",
-					required: false,
-					type: "String",
-					description: "Currency (defaults to NGN)",
-					options: [
-						"NGN",
-						"GHS",
-						"ZAR",
-						"KES",
-						"UGX",
-						"TZS",
-						"XAF",
-						"XOF",
-						"USD"
-					]
-				},
-				{
-					parameter: "send_notification",
-					required: false,
-					type: "String",
-					description: "Whether to send email notification (defaults to true)"
-				},
-				{
-					parameter: "draft",
-					required: false,
-					type: "String",
-					description: "Save as draft (defaults to false)"
-				},
-				{
-					parameter: "has_invoice",
-					required: false,
-					type: "String",
-					description: "Create a draft invoice even without line items or tax"
-				},
-				{
-					parameter: "invoice_number",
-					required: false,
-					type: "String",
-					description: "Override the auto-incrementing invoice number"
-				}
-			],
-			description: "Create a new payment request"
-		},
-		{
-			api: "finalize",
-			endpoint: "https://api.paystack.co/paymentrequest/finalize/ID_OR_CODE",
-			method: "POST",
-			params: [{
-				parameter: "send_notification",
-				required: false,
-				type: "String",
-				description: "Whether to send email notification (defaults to true)"
-			}],
-			description: "Finalize/publish a draft payment request"
-		},
-		{
-			api: "send",
-			endpoint: "https://api.paystack.co/paymentrequest/notify/ID_OR_CODE",
-			method: "POST",
-			params: [],
-			description: "Send payment request notification to customer"
-		},
-		{
-			api: "list",
-			endpoint: "https://api.paystack.co/paymentrequest",
-			method: "GET",
-			params: [
-				{
-					parameter: "customer",
-					required: false,
-					type: "String",
-					description: "Filter by customer ID"
-				},
-				{
-					parameter: "status",
-					required: false,
-					type: "String",
-					description: "Filter by status: \"failed\", \"success\", or \"abandoned\""
-				},
-				{
-					parameter: "currency",
-					required: false,
-					type: "String",
-					description: "Filter by currency",
-					options: [
-						"NGN",
-						"GHS",
-						"ZAR",
-						"KES",
-						"UGX",
-						"TZS",
-						"XAF",
-						"XOF",
-						"USD"
-					]
-				},
-				{
-					parameter: "paid",
-					required: false,
-					type: "String",
-					description: "Filter requests that have been paid for"
-				},
-				{
-					parameter: "include_archive",
-					required: false,
-					type: "String",
-					description: "Include archived payment requests"
-				},
-				{
-					parameter: "payment_request",
-					required: false,
-					type: "String",
-					description: "Filter by invoice code"
-				}
-			],
-			description: "List all payment requests"
-		},
-		{
-			api: "view",
-			endpoint: "https://api.paystack.co/paymentrequest/REQUEST_ID_OR_CODE",
-			method: "GET",
-			params: [{
-				parameter: "id",
-				required: true,
-				type: "String",
-				description: "Payment request ID or code"
-			}],
-			description: "View a specific payment request"
-		},
-		{
-			api: "invoice",
-			endpoint: "https://api.paystack.co/paymentrequest/totals",
-			method: "GET",
-			params: [],
-			description: "Get payment request totals"
-		},
-		{
-			api: "update",
-			endpoint: "https://api.paystack.co/paymentrequest/ID_OR_CODE",
-			method: "PUT",
-			params: [
-				{
-					parameter: "description",
-					required: false,
-					type: "String",
-					description: "Payment request description"
-				},
-				{
-					parameter: "amount",
-					required: false,
-					type: "Number",
-					description: "Amount in kobo"
-				},
-				{
-					parameter: "line_item",
-					required: false,
-					type: "String",
-					description: "Line items"
-				},
-				{
-					parameter: "tax",
-					required: false,
-					type: "String",
-					description: "Taxes"
-				},
-				{
-					parameter: "due_date",
-					required: false,
-					type: "String",
-					description: "Due date for the request"
-				},
-				{
-					parameter: "metadata",
-					required: false,
-					type: "String",
-					description: "Additional metadata"
-				},
-				{
-					parameter: "send_notification",
-					required: false,
-					type: "String",
-					description: "Whether to send notification"
-				},
-				{
-					parameter: "currency",
-					required: false,
-					type: "String",
-					description: "Currency (only works in draft mode)",
-					options: [
-						"NGN",
-						"GHS",
-						"ZAR",
-						"KES",
-						"UGX",
-						"TZS",
-						"XAF",
-						"XOF",
-						"USD"
-					]
-				},
-				{
-					parameter: "customer",
-					required: false,
-					type: "String",
-					description: "Customer ID (only works in draft mode)"
-				}
-			],
-			description: "Update a payment request"
-		},
-		{
-			api: "verify",
-			endpoint: "https://api.paystack.co/paymentrequest/verify/{id}",
-			method: "GET",
-			params: [{
-				parameter: "id",
-				required: false,
-				type: "String",
-				description: "The invoice code for the Payment Request to be verified",
-				paramType: "path"
-			}],
-			description: "Verify details of a payment request on your integration."
-		}
-	],
-	transferrecipient: [
-		{
-			api: "create",
-			endpoint: "https://api.paystack.co/transferrecipient",
-			method: "POST",
-			params: [
-				{
-					parameter: "type",
-					required: true,
-					type: "String",
-					description: "Recipient Type",
-					options: [
-						"nuban",
-						"ghipss",
-						"mobile_money",
-						"basa"
-					]
-				},
-				{
-					parameter: "name",
-					required: true,
-					type: "String",
-					description: "A name for the recipient"
-				},
-				{
-					parameter: "metadata",
-					required: false,
-					type: "String",
-					description: "Additional information in structured JSON format"
-				},
-				{
-					parameter: "bank_code",
-					required: true,
-					type: "String",
-					description: "Bank code from the List Banks endpoint"
-				},
-				{
-					parameter: "account_number",
-					required: true,
-					type: "String",
-					description: "Bank account number (required if type is nuban)"
-				},
-				{
-					parameter: "currency",
-					required: false,
-					type: "String",
-					description: "Currency for the account receiving the transfer",
-					options: [
-						"NGN",
-						"GHS",
-						"ZAR",
-						"KES",
-						"UGX",
-						"TZS",
-						"XAF",
-						"XOF",
-						"USD"
-					]
-				},
-				{
-					parameter: "description",
-					required: false,
-					type: "String",
-					description: "Description for the recipient"
-				}
-			],
-			description: "Create a new transfer recipient"
-		},
-		{
-			api: "delete",
-			endpoint: "https://api.paystack.co/transferrecipient/{id_or_code}",
-			method: "DELETE",
-			params: [{
-				parameter: "id_or_code",
-				required: true,
-				type: "String",
-				description: "Transfer Recipient's ID or code",
-				paramType: "path"
-			}],
-			description: "Delete a transfer recipient"
-		},
-		{
-			api: "list",
-			endpoint: "https://api.paystack.co/transferrecipient",
-			method: "GET",
-			params: [{
-				parameter: "perPage",
-				required: false,
-				type: "String",
-				description: "Specify how many records you want to retrieve per page"
-			}, {
-				parameter: "page",
-				required: false,
-				type: "Number",
-				description: "Specify exactly what page you want to retrieve"
-			}],
-			description: "List all transfer recipients"
-		},
-		{
-			api: "update",
-			endpoint: "https://api.paystack.co/transferrecipient/{id_or_code}",
-			method: "PUT",
-			params: [{
-				parameter: "id_or_code",
-				required: true,
-				type: "String",
-				description: "Transfer Recipient's ID or code",
-				paramType: "path"
-			}],
-			description: "Update a transfer recipient"
-		}
-	],
-	subscription: [
-		{
-			api: "disable",
-			endpoint: "https://api.paystack.co/subscription/disable",
-			method: "POST",
-			params: [{
-				parameter: "code",
-				required: true,
-				type: "String",
-				description: "Subscription code"
-			}, {
-				parameter: "token",
-				required: true,
-				type: "String",
-				description: "Email token"
-			}],
-			description: "Disable a subscription"
-		},
-		{
-			api: "fetch",
-			endpoint: ":id_or_subscription_code",
-			method: "GET",
-			params: [],
-			description: "Fetch a specific subscription"
-		},
-		{
-			api: "create",
-			endpoint: "https://api.paystack.co/subscription",
-			method: "POST",
-			params: [
-				{
-					parameter: "customer",
-					required: true,
-					type: "String",
-					description: "Customer email address or customer code"
-				},
-				{
-					parameter: "plan",
-					required: true,
-					type: "String",
-					description: "Plan code"
-				},
-				{
-					parameter: "authorization",
-					required: false,
-					type: "String",
-					description: "Authorization code (required if customer has multiple authorizations)"
-				},
-				{
-					parameter: "start_date",
-					required: false,
-					type: "String",
-					description: "Start date for the first debit (ISO 8601 format)"
-				}
-			],
-			description: "Create a subscription for a customer"
-		},
-		{
-			api: "list",
-			endpoint: "https://api.paystack.co/subscription",
-			method: "GET",
-			params: [
-				{
-					parameter: "perPage",
-					required: false,
-					type: "String",
-					description: "Specify how many records you want to retrieve per page"
-				},
-				{
-					parameter: "page",
-					required: false,
-					type: "Number",
-					description: "Specify exactly what page you want to retrieve"
-				},
-				{
-					parameter: "customer",
-					required: false,
-					type: "String",
-					description: "Filter by Customer ID"
-				},
-				{
-					parameter: "plan",
-					required: false,
-					type: "String",
-					description: "Filter by Plan ID"
-				}
-			],
-			description: "List all subscriptions"
-		},
-		{
-			api: "enable",
-			endpoint: "https://api.paystack.co/subscription/enable",
-			method: "POST",
-			params: [{
-				parameter: "code",
-				required: true,
-				type: "String",
-				description: "Subscription code"
-			}, {
-				parameter: "token",
-				required: true,
-				type: "String",
-				description: "Email token"
-			}],
-			description: "Enable a subscription"
-		}
-	],
-	bulkcharge: [
-		{
-			api: "fetch",
-			endpoint: "https://api.paystack.co/bulkcharge/id_or_code",
-			method: "GET",
-			params: [{
-				parameter: "id_or_code",
-				required: true,
-				type: "String",
-				description: "An ID or code for the batch whose details you want to retrieve"
-			}],
-			description: "Fetch a specific bulk charge batch with progress information"
-		},
-		{
-			api: "fetch",
-			endpoint: "https://api.paystack.co/bulkcharge/id_or_code/charges",
-			method: "GET",
-			params: [
-				{
-					parameter: "id_or_code",
-					required: true,
-					type: "String",
-					description: "An ID or code for the batch whose charges you want to retrieve"
-				},
-				{
-					parameter: "status",
-					required: false,
-					type: "String",
-					description: "Filter by status: \"pending\", \"success\", or \"failed\""
-				},
-				{
-					parameter: "perPage",
-					required: false,
-					type: "String",
-					description: "Specify how many records you want to retrieve per page"
-				},
-				{
-					parameter: "page",
-					required: false,
-					type: "Number",
-					description: "Specify exactly what page you want to retrieve"
-				}
-			],
-			description: "Retrieve all charges associated with a bulk charge batch"
-		},
-		{
-			api: "initiate",
-			endpoint: "https://api.paystack.co/bulkcharge",
-			method: "POST",
-			params: [],
-			description: "Initiate a bulk charge by sending an array of authorization codes and amounts"
-		},
-		{
-			api: "resume",
-			endpoint: "https://api.paystack.co/bulkcharge/resume/batch_code",
-			method: "GET",
-			params: [{
-				parameter: "batch_code",
-				required: true,
-				type: "String",
-				description: "Code of the batch to resume processing"
-			}],
-			description: "Resume processing a paused bulk charge batch"
-		},
-		{
-			api: "pause",
-			endpoint: "https://api.paystack.co/bulkcharge/pause/batch_code",
-			method: "GET",
-			params: [{
-				parameter: "batch_code",
-				required: true,
-				type: "String",
-				description: "Code of the batch to pause"
-			}],
-			description: "Pause processing a bulk charge batch"
-		}
-	],
-	bank: [
-		{
-			api: "list",
-			endpoint: "https://api.paystack.co/bank",
-			method: "GET",
-			params: [],
-			description: "List all supported banks"
-		},
-		{
-			api: "resolve",
-			endpoint: "https://api.paystack.co/bank/resolve?account_number={account_number}&bank_code={bank_code}",
-			method: "GET",
-			params: [{
-				parameter: "account_number",
-				required: true,
-				type: "String",
-				description: "Bank account number",
-				paramType: "path"
-			}, {
-				parameter: "bank_code",
-				required: true,
-				type: "String",
-				description: "Bank code",
-				paramType: "path"
-			}],
-			description: "Resolve account details by account number and bank code"
-		},
-		{
-			api: "match",
-			endpoint: "{account_number}&bank_code={bank_code}&bvn={bvn}",
-			method: "GET",
-			params: [
-				{
-					parameter: "account_number",
-					required: true,
-					type: "String",
-					description: "Bank account number",
+					description: "The account owner of the repository",
 					paramType: "path"
 				},
 				{
-					parameter: "bank_code",
-					required: true,
+					parameter: "repo",
+					required: false,
 					type: "String",
-					description: "Bank code from List Bank endpoint",
+					description: "The name of the repository",
 					paramType: "path"
 				},
 				{
-					parameter: "bvn",
-					required: true,
+					parameter: "state",
+					required: false,
 					type: "String",
-					description: "11 digit BVN",
+					description: "Indicates the state of the issues to return. [open, closed]",
+					paramType: "query"
+				}
+			]
+		},
+		{
+			api: "get",
+			alias: "get",
+			endpoint: "/repos/{owner}/{repo}/issues/{issue_number}",
+			description: "Get a single issue",
+			params: [
+				{
+					parameter: "issue_number",
+					required: true,
+					type: "Number",
+					description: "The number of the issue to get",
+					paramType: "path"
+				},
+				{
+					parameter: "owner",
+					required: false,
+					type: "String",
+					description: "The account owner of the repository",
+					paramType: "path"
+				},
+				{
+					parameter: "repo",
+					required: false,
+					type: "String",
+					description: "The name of the repository",
 					paramType: "path"
 				}
-			],
-			description: "Match account details with BVN for verification"
+			]
 		}
 	],
-	charge: [
-		{
-			api: "submit",
-			endpoint: "https://api.paystack.co/charge/submit_otp",
-			method: "POST",
-			params: [{
-				parameter: "otp",
-				required: true,
-				type: "String",
-				description: "OTP submitted by user"
-			}, {
-				parameter: "reference",
-				required: true,
-				type: "String",
-				description: "Reference for ongoing transaction"
-			}],
-			description: "Submit OTP to complete a charge"
-		},
-		{
-			api: "submit",
-			endpoint: "https://api.paystack.co/charge/submit_pin",
-			method: "POST",
-			params: [{
-				parameter: "pin",
-				required: true,
-				type: "String",
-				description: "PIN submitted by user"
-			}, {
-				parameter: "reference",
-				required: true,
-				type: "String",
-				description: "Reference for transaction that requested PIN"
-			}],
-			description: "Submit PIN to complete a charge"
-		},
-		{
-			api: "submit",
-			endpoint: "https://api.paystack.co/charge/submit_birthday",
-			method: "POST",
-			params: [{
-				parameter: "birthday",
-				required: true,
-				type: "String",
-				description: "Birthday submitted by user"
-			}, {
-				parameter: "reference",
-				required: true,
-				type: "String",
-				description: "Reference for ongoing transaction"
-			}],
-			description: "Submit birthday to complete a charge"
-		},
-		{
-			api: "tokenize",
-			endpoint: "https://api.paystack.co/charge/tokenize",
-			method: "POST",
-			params: [{
-				parameter: "email",
-				required: true,
-				type: "String",
-				description: "Customer email address"
-			}, {
-				parameter: "card",
-				required: true,
-				type: "String",
-				description: "Card object containing number, cvv, expiry_month, and expiry_year"
-			}],
-			description: "Tokenize a card for future charges"
-		},
-		{
-			api: "check",
-			endpoint: "https://api.paystack.co/charge/reference",
-			method: "GET",
-			params: [{
-				parameter: "reference",
-				required: true,
-				type: "String",
-				description: "The reference to check"
-			}],
-			description: "Check the status of a charge transaction"
-		},
-		{
-			api: "charge",
-			endpoint: "https://api.paystack.co/charge",
-			method: "POST",
-			params: [
-				{
-					parameter: "email",
-					required: true,
-					type: "String",
-					description: "Customer email address"
-				},
-				{
-					parameter: "amount",
-					required: true,
-					type: "Number",
-					description: "Amount in kobo"
-				},
-				{
-					parameter: "card",
-					required: false,
-					type: "String",
-					description: "Card object with number, cvv, expiry_month, and expiry_year"
-				},
-				{
-					parameter: "bank",
-					required: false,
-					type: "String",
-					description: "Bank object with code and account_number"
-				},
-				{
-					parameter: "authorization_code",
-					required: false,
-					type: "String",
-					description: "Valid authorization code to charge"
-				},
-				{
-					parameter: "pin",
-					required: false,
-					type: "String",
-					description: "4-digit PIN for non-reusable authorization code"
-				},
-				{
-					parameter: "metadata",
-					required: false,
-					type: "String",
-					description: "A JSON object for additional transaction data"
-				}
-			],
-			description: "Charge a customer using card, bank account, or authorization code"
-		},
-		{
-			api: "submit",
-			endpoint: "https://api.paystack.co/charge/submit_phone",
-			method: "POST",
-			params: [{
-				parameter: "phone",
-				required: true,
-				type: "String",
-				description: "Phone number submitted by user"
-			}, {
-				parameter: "reference",
-				required: true,
-				type: "String",
-				description: "Reference for ongoing transaction"
-			}],
-			description: "Submit phone number to complete a charge"
-		}
-	],
-	transaction: [
-		{
-			api: "verify",
-			endpoint: "https://api.paystack.co/transaction/verify/{reference}",
-			method: "GET",
-			params: [{
-				parameter: "reference",
-				required: true,
-				type: "String",
-				description: "Transaction reference to verify",
-				paramType: "path"
-			}],
-			description: "Verify transaction status by reference"
-		},
-		{
-			api: "list",
-			endpoint: "https://api.paystack.co/transaction",
-			method: "GET",
-			params: [
-				{
-					parameter: "perPage",
-					required: false,
-					type: "String",
-					description: "Specify how many records you want to retrieve per page"
-				},
-				{
-					parameter: "page",
-					required: false,
-					type: "Number",
-					description: "Specify exactly what page you want to retrieve"
-				},
-				{
-					parameter: "customer",
-					required: false,
-					type: "String",
-					description: "Specify an ID for the customer whose transactions you want to retrieve"
-				},
-				{
-					parameter: "status",
-					required: false,
-					type: "String",
-					description: "Filter transactions by status (\"failed\", \"success\", \"abandoned\")"
-				},
-				{
-					parameter: "from",
-					required: false,
-					type: "String",
-					description: "A timestamp from which to start listing transactions (e.g. 2016-09-24T00:00:05.000Z, 2016-09-21)"
-				},
-				{
-					parameter: "to",
-					required: false,
-					type: "String",
-					description: "A timestamp at which to stop listing transactions (e.g. 2016-09-24T00:00:05.000Z, 2016-09-21)"
-				},
-				{
-					parameter: "amount",
-					required: false,
-					type: "Number",
-					description: "Filter transactions by amount (in kobo)"
-				}
-			],
-			description: "List all transactions"
-		},
-		{
-			api: "view",
-			endpoint: ":id_or_reference",
-			method: "GET",
-			params: [],
-			description: "View a specific transaction"
-		},
-		{
-			api: "charge",
-			endpoint: "https://api.paystack.co/transaction/charge_authorization",
-			method: "POST",
-			params: [
-				{
-					parameter: "authorization_code",
-					required: true,
-					type: "String",
-					description: "Valid authorization code to charge"
-				},
-				{
-					parameter: "email",
-					required: true,
-					type: "String",
-					description: "Customer email address"
-				},
-				{
-					parameter: "amount",
-					required: true,
-					type: "Number",
-					description: "Amount in kobo"
-				},
-				{
-					parameter: "reference",
-					required: false,
-					type: "String",
-					description: "Unique transaction reference"
-				},
-				{
-					parameter: "plan",
-					required: false,
-					type: "String",
-					description: "Plan code for subscription"
-				},
-				{
-					parameter: "currency",
-					required: false,
-					type: "String",
-					description: "Currency to charge in",
-					options: [
-						"NGN",
-						"GHS",
-						"ZAR",
-						"KES",
-						"UGX",
-						"TZS",
-						"XAF",
-						"XOF",
-						"USD"
-					]
-				},
-				{
-					parameter: "metadata",
-					required: false,
-					type: "String",
-					description: "Additional transaction metadata"
-				},
-				{
-					parameter: "subaccount",
-					required: false,
-					type: "String",
-					description: "Subaccount code that owns the payment"
-				},
-				{
-					parameter: "transaction_charge",
-					required: false,
-					type: "String",
-					description: "Flat fee to charge the subaccount in kobo"
-				},
-				{
-					parameter: "bearer",
-					required: false,
-					type: "String",
-					description: "Who bears Paystack charges: \"account\" or \"subaccount\""
-				},
-				{
-					parameter: "invoice_limit",
-					required: false,
-					type: "String",
-					description: "Number of invoices to raise during subscription"
-				}
-			],
-			description: "Charge a customer using a stored authorization code"
-		},
-		{
-			api: "export",
-			endpoint: "https://api.paystack.co/transaction/export",
-			method: "GET",
-			params: [
-				{
-					arg: true,
-					parameter: "from",
-					required: false,
-					type: "String",
-					description: "Lower bound of date range"
-				},
-				{
-					arg: true,
-					parameter: "to",
-					required: false,
-					type: "String",
-					description: "Upper bound of date range"
-				},
-				{
-					parameter: "settled",
-					required: false,
-					type: "String",
-					description: "Set to \"true\" for settled transactions or \"false\" for pending"
-				},
-				{
-					parameter: "payment_page",
-					required: false,
-					type: "String",
-					description: "Payment page ID to filter transactions"
-				},
-				{
-					parameter: "customer",
-					required: false,
-					type: "String",
-					description: "Customer ID to filter transactions"
-				},
-				{
-					parameter: "currency",
-					required: false,
-					type: "String",
-					description: "Currency to filter transactions",
-					options: [
-						"NGN",
-						"GHS",
-						"ZAR",
-						"KES",
-						"UGX",
-						"TZS",
-						"XAF",
-						"XOF",
-						"USD"
-					]
-				},
-				{
-					parameter: "settlement",
-					required: false,
-					type: "String",
-					description: "Settlement ID to filter transactions"
-				},
-				{
-					parameter: "amount",
-					required: false,
-					type: "Number",
-					description: "Amount to filter transactions"
-				},
-				{
-					parameter: "status",
-					required: false,
-					type: "String",
-					description: "Status to filter transactions"
-				}
-			],
-			description: "Export transactions to CSV"
-		},
-		{
-			api: "check",
-			endpoint: "https://api.paystack.co/transaction/check_authorization",
-			method: "POST",
-			params: [
-				{
-					parameter: "authorization_code",
-					required: true,
-					type: "String",
-					description: "Authorization code for Mastercard or VISA"
-				},
-				{
-					parameter: "amount",
-					required: true,
-					type: "Number",
-					description: "Amount in kobo to check"
-				},
-				{
-					parameter: "email",
-					required: true,
-					type: "String",
-					description: "Customer email address"
-				},
-				{
-					parameter: "currency",
-					required: false,
-					type: "String",
-					description: "Currency for the amount to check",
-					options: [
-						"NGN",
-						"GHS",
-						"ZAR",
-						"KES",
-						"UGX",
-						"TZS",
-						"XAF",
-						"XOF",
-						"USD"
-					]
-				}
-			],
-			description: "Check if an authorization code has sufficient funds"
-		},
-		{
-			api: "transaction",
-			endpoint: "https://api.paystack.co/transaction/totals",
-			method: "GET",
-			params: [{
-				arg: true,
-				parameter: "from",
-				required: false,
-				type: "String",
-				description: "Lower bound of date range"
-			}, {
-				arg: true,
-				parameter: "to",
-				required: false,
-				type: "String",
-				description: "Upper bound of date range"
-			}],
-			description: "Get total amount received on your account"
-		},
-		{
-			api: "initialize",
-			endpoint: "https://api.paystack.co/transaction/initialize",
-			method: "POST",
-			params: [
-				{
-					parameter: "email",
-					required: true,
-					type: "String",
-					description: "Customer email address"
-				},
-				{
-					parameter: "amount",
-					required: true,
-					type: "Number",
-					description: "Amount in kobo"
-				},
-				{
-					parameter: "reference",
-					required: false,
-					type: "String",
-					description: "Unique transaction reference or leave blank for auto-generation"
-				},
-				{
-					parameter: "callback_url",
-					required: false,
-					type: "String",
-					description: "URL to redirect to after payment"
-				},
-				{
-					parameter: "plan",
-					required: false,
-					type: "String",
-					description: "Plan code for subscription"
-				},
-				{
-					parameter: "invoice_limit",
-					required: false,
-					type: "String",
-					description: "Number of invoices to raise during subscription"
-				},
-				{
-					parameter: "metadata",
-					required: false,
-					type: "String",
-					description: "Additional transaction metadata"
-				},
-				{
-					parameter: "subaccount",
-					required: false,
-					type: "String",
-					description: "Subaccount code that owns the payment"
-				},
-				{
-					parameter: "transaction_charge",
-					required: false,
-					type: "String",
-					description: "Flat fee to charge the subaccount in kobo"
-				},
-				{
-					parameter: "bearer",
-					required: false,
-					type: "String",
-					description: "Who bears Paystack charges (defaults to \"account\")"
-				},
-				{
-					parameter: "channels",
-					required: false,
-					type: "String",
-					description: "Payment channels to enable: \"card\", \"bank\", or both as array"
-				}
-			],
-			description: "Initialize a transaction"
-		},
-		{
-			api: "fetch",
-			endpoint: "https://api.paystack.co/transaction/id",
-			method: "GET",
-			params: [{
-				parameter: "id",
-				required: true,
-				type: "String",
-				description: "An ID for the transaction to fetch"
-			}],
-			description: "Fetch transaction details by ID"
-		}
-	],
-	plan: [
-		{
-			api: "update",
-			endpoint: ":id_or_plan_code",
-			method: "PUT",
-			params: [
-				{
-					parameter: "name",
-					required: false,
-					type: "String",
-					description: "Name of plan"
-				},
-				{
-					parameter: "description",
-					required: false,
-					type: "String",
-					description: "Short description of plan"
-				},
-				{
-					parameter: "amount",
-					required: false,
-					type: "Number",
-					description: "Amount to charge in kobo (will override amount for existing subscriptions)"
-				},
-				{
-					parameter: "interval",
-					required: false,
-					type: "String",
-					description: "Billing interval (hourly, daily, weekly, monthly, annually)"
-				},
-				{
-					parameter: "send_invoices",
-					required: false,
-					type: "String",
-					description: "Set to false to disable invoice emails"
-				},
-				{
-					parameter: "send_sms",
-					required: false,
-					type: "String",
-					description: "Set to false to disable SMS notifications"
-				},
-				{
-					parameter: "currency",
-					required: false,
-					type: "String",
-					description: "Currency for the amount",
-					options: [
-						"NGN",
-						"GHS",
-						"ZAR",
-						"KES",
-						"UGX",
-						"TZS",
-						"XAF",
-						"XOF",
-						"USD"
-					]
-				},
-				{
-					parameter: "invoice_limit",
-					required: false,
-					type: "String",
-					description: "Number of invoices to raise during subscription (will not override active subscriptions)"
-				}
-			],
-			description: "Update a plan"
-		},
-		{
-			api: "create",
-			endpoint: "https://api.paystack.co/plan",
-			method: "POST",
-			params: [
-				{
-					parameter: "name",
-					required: true,
-					type: "String",
-					description: "Name of plan"
-				},
-				{
-					parameter: "description",
-					required: false,
-					type: "String",
-					description: "Short description of plan"
-				},
-				{
-					parameter: "amount",
-					required: true,
-					type: "Number",
-					description: "Amount to charge in kobo"
-				},
-				{
-					parameter: "interval",
-					required: true,
-					type: "String",
-					description: "Billing interval (hourly, daily, weekly, monthly, annually)"
-				},
-				{
-					parameter: "send_invoices",
-					required: false,
-					type: "String",
-					description: "Set to false to disable invoice emails"
-				},
-				{
-					parameter: "currency",
-					required: false,
-					type: "String",
-					description: "Currency for the amount",
-					options: [
-						"NGN",
-						"GHS",
-						"ZAR",
-						"KES",
-						"UGX",
-						"TZS",
-						"XAF",
-						"XOF",
-						"USD"
-					]
-				},
-				{
-					parameter: "invoice_limit",
-					required: false,
-					type: "String",
-					description: "Number of invoices to raise during subscription"
-				}
-			],
-			description: "Create a new plan"
-		},
-		{
-			api: "list",
-			endpoint: "https://api.paystack.co/plan",
-			method: "GET",
-			params: [
-				{
-					parameter: "perPage",
-					required: false,
-					type: "String",
-					description: "Specify how many records you want to retrieve per page"
-				},
-				{
-					parameter: "page",
-					required: false,
-					type: "Number",
-					description: "Specify exactly what page you want to retrieve"
-				},
-				{
-					parameter: "interval",
-					required: false,
-					type: "String",
-					description: "Filter list by plans with specified interval"
-				},
-				{
-					parameter: "amount",
-					required: false,
-					type: "Number",
-					description: "Filter list by plans with specified amount (in kobo)"
-				}
-			],
-			description: "List all plans"
-		},
-		{
-			api: "fetch",
-			endpoint: "https://api.paystack.co/plan/id_or_plan_code",
-			method: "GET",
-			params: [],
-			description: "Fetch a specific plan"
-		}
-	],
-	customer: [
-		{
-			api: "update",
-			endpoint: "https://api.paystack.co/customer/:ID_OR_CUSTOMER_CODE",
-			method: "PUT",
-			params: [
-				{
-					parameter: "first_name",
-					required: false,
-					type: "String",
-					description: "Customer first name"
-				},
-				{
-					parameter: "last_name",
-					required: false,
-					type: "String",
-					description: "Customer last name"
-				},
-				{
-					parameter: "phone",
-					required: false,
-					type: "String",
-					description: "Customer phone number"
-				},
-				{
-					parameter: "metadata",
-					required: false,
-					type: "String",
-					description: "Additional customer information in structured JSON format"
-				}
-			],
-			description: "Update customer details"
-		},
-		{
-			api: "list",
-			endpoint: "https://api.paystack.co/customer",
-			method: "GET",
-			params: [{
-				parameter: "perPage",
-				required: false,
-				type: "String",
-				description: "Specify how many records you want to retrieve per page"
-			}, {
-				parameter: "page",
-				required: false,
-				type: "Number",
-				description: "Specify exactly what page you want to retrieve"
-			}],
-			description: "List all customers"
-		},
-		{
-			api: "create",
-			endpoint: "https://api.paystack.co/customer",
-			method: "POST",
-			params: [
-				{
-					parameter: "email",
-					required: true,
-					type: "String",
-					description: "Customer email address"
-				},
-				{
-					parameter: "first_name",
-					required: false,
-					type: "String",
-					description: "Customer first name"
-				},
-				{
-					parameter: "last_name",
-					required: false,
-					type: "String",
-					description: "Customer last name"
-				},
-				{
-					parameter: "phone",
-					required: false,
-					type: "String",
-					description: "Customer phone number"
-				},
-				{
-					parameter: "metadata",
-					required: false,
-					type: "String",
-					description: "Additional customer information in structured JSON format"
-				}
-			],
-			description: "Create a new customer"
-		},
-		{
-			api: "fetch",
-			endpoint: ":id_or_customer_code",
-			method: "GET",
-			params: [{
-				parameter: "exclude_transactions",
-				required: false,
-				type: "String",
-				description: "By default, fetching a customer returns all their transactions. Set this to true to disable this behaviour"
-			}],
-			description: "Fetch a specific customer"
-		},
-		{
-			api: "set_risk_action",
-			endpoint: "https://api.paystack.co/customer/set_risk_action",
-			method: "POST",
-			params: [{
-				parameter: "customer",
-				required: false,
-				type: "String",
-				description: "Customer ID, code, or email address"
-			}, {
-				parameter: "risk_action",
-				required: false,
-				type: "String",
-				description: "One of the possible risk actions. \"allow\" to whitelist, \"deny\" to blacklist"
-			}],
-			description: "Set customer risk action (whitelist or blacklist)"
-		},
-		{
-			api: "deactivate",
-			endpoint: "https://api.paystack.co/customer/deactivate_authorization",
-			method: "POST",
-			params: [{
-				parameter: "authorization_code",
-				required: true,
-				type: "String",
-				description: "Authorization code to deactivate"
-			}],
-			description: "Deactivate an authorization for a customer"
-		}
-	],
-	refund: [
-		{
-			api: "create",
-			endpoint: "https://api.paystack.co/refund",
-			method: "POST",
-			params: [
-				{
-					parameter: "transaction",
-					required: true,
-					type: "String",
-					description: "Transaction reference or ID to refund"
-				},
-				{
-					parameter: "amount",
-					required: false,
-					type: "Number",
-					description: "Amount to refund in kobo (defaults to full transaction amount)"
-				},
-				{
-					parameter: "currency",
-					required: false,
-					type: "String",
-					description: "Three-letter ISO currency code",
-					options: [
-						"NGN",
-						"GHS",
-						"ZAR",
-						"KES",
-						"UGX",
-						"TZS",
-						"XAF",
-						"XOF",
-						"USD"
-					]
-				},
-				{
-					parameter: "customer_note",
-					required: false,
-					type: "String",
-					description: "Customer-facing reason for refund"
-				},
-				{
-					parameter: "merchant_note",
-					required: false,
-					type: "String",
-					description: "Internal merchant reason for refund"
-				}
-			],
-			description: "Create a refund for a transaction"
-		},
-		{
-			api: "fetch",
-			endpoint: ":id",
-			method: "GET",
-			params: [{
-				parameter: "id",
-				required: false,
-				type: "String",
-				description: "ID of the refund to retrieve"
-			}],
-			description: "Fetch refund details by ID"
-		},
-		{
-			api: "list",
-			endpoint: "https://api.paystack.co/refund",
-			method: "GET",
-			params: [{
-				parameter: "transaction",
-				required: false,
-				type: "String",
-				description: "Filter by transaction"
-			}, {
-				parameter: "currency",
-				required: false,
-				type: "String",
-				description: "Filter by currency",
-				options: [
-					"NGN",
-					"GHS",
-					"ZAR",
-					"KES",
-					"UGX",
-					"TZS",
-					"XAF",
-					"XOF",
-					"USD"
-				]
-			}],
-			description: "List all refunds"
-		}
-	],
-	integration: [{
-		api: "update",
-		endpoint: "https://api.paystack.co/integration/payment_session_timeout",
-		method: "PUT",
+	orgs: [{
+		api: "listForAuthenticatedUser",
+		alias: "list",
+		endpoint: "/user/orgs",
+		description: "List organizations for the authenticated user",
 		params: [{
-			parameter: "timeout",
+			parameter: "page",
 			required: false,
-			type: "String",
-			description: "Session timeout in seconds (set to 0 to disable session timeouts)"
-		}],
-		description: "Update payment session timeout setting"
-	}, {
-		api: "fetch",
-		endpoint: "https://api.paystack.co/integration/payment_session_timeout",
-		method: "GET",
-		params: [],
-		description: "Fetch payment session timeout setting"
-	}],
-	balance: [{
-		api: "check",
-		endpoint: "https://api.paystack.co/balance",
-		method: "GET",
-		params: [],
-		description: "You can only transfer from what you have"
-	}, {
-		api: "balance",
-		endpoint: "https://api.paystack.co/balance/ledger",
-		method: "GET",
-		params: [],
-		description: "Retrieve account balance ledger activity"
-	}],
-	settlement: [{
-		api: "fetch",
-		endpoint: "https://api.paystack.co/settlement",
-		method: "GET",
-		params: [
-			{
-				arg: true,
-				parameter: "from",
-				required: false,
-				type: "String",
-				description: "Lower bound of date range. Leave undefined to export settlement from day one"
-			},
-			{
-				arg: true,
-				parameter: "to",
-				required: false,
-				type: "String",
-				description: "Upper bound of date range. Leave undefined to export settlements till date"
-			},
-			{
-				parameter: "subaccount",
-				required: false,
-				type: "String",
-				description: "Provide a subaccount code to export only settlements for that subaccount. Set to \"none\" to export only transactions for the account"
-			}
-		],
-		description: "Retrieve settlements made to your bank accounts"
-	}],
-	decision: [{
-		api: "resolve",
-		endpoint: "{BIN)",
-		method: "GET",
-		params: [{
-			parameter: "bin",
-			required: true,
-			type: "String",
-			description: "First 6 characters of card"
-		}],
-		description: "Resolve card information by BIN"
-	}],
-	invoice: [{
-		api: "archive",
-		endpoint: ":id_or_code",
-		method: "POST",
-		params: [],
-		description: "Archive an invoice to prevent it from being fetched or verified"
-	}],
-	verifications: [{
-		api: "resolve",
-		endpoint: "https://api.paystack.co/verifications",
-		method: "POST",
-		params: [
-			{
-				parameter: "verification_type",
-				required: true,
-				type: "String",
-				description: "Type of verification to perform"
-			},
-			{
-				parameter: "phone",
-				required: true,
-				type: "String",
-				description: "Customer phone number with country code (no + prefix)"
-			},
-			{
-				parameter: "callback_url",
-				required: false,
-				type: "String",
-				description: "URL to receive verification details"
-			}
-		],
-		description: "Verify customer authenticity using Truecaller API"
+			type: "Number",
+			description: "Page number of the results to fetch",
+			paramType: "query"
+		}, {
+			parameter: "per_page",
+			required: false,
+			type: "Number",
+			description: "Results per page (max 100)",
+			paramType: "query"
+		}]
 	}]
 };
 var apis_default = APIs;
@@ -2437,7 +453,7 @@ var apis_default = APIs;
 const buildSignature = (param, cmd) => {
 	const [_, setShortcut] = useShortcuts();
 	let signature = "";
-	if ((!param.required || param.default !== void 0 || param.type === "Boolean" || param.options) && param.paramType !== "path" && param.arg !== true) {
+	if ((!param.required || param.default !== void 0 || param.type === "Boolean" || param.options || param.flag === true) && param.paramType !== "path" && param.arg !== true) {
 		signature += "{--";
 		if (setShortcut(cmd + ":" + param.parameter.charAt(0).toLowerCase())) signature += `${param.parameter.charAt(0).toLowerCase()}|`;
 		else {
@@ -2493,6 +509,10 @@ const dataRenderer = (data) => {
 					case "boolean":
 						coloredValue = Logger.log(String(value), "blue", false);
 						break;
+					case "object":
+						if (value === null) coloredValue = Logger.log("null", "gray", false);
+						else coloredValue = Logger.log(JSON.stringify(value), "cyan", false);
+						break;
 					default: coloredValue = value;
 				}
 				console.log(`${indentation}${stringFormatter(key)}: ${coloredValue}`);
@@ -2514,19 +534,37 @@ const dataRenderer = (data) => {
 const stringFormatter = (str) => {
 	return str.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/[_-]+/g, " ").replace(/\s+/g, " ").split(" ").map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ").trim().replace(/^(\w{2})$/, (_, p1) => p1.toUpperCase());
 };
+/**
+* Render the difference between two text strings, highlighting additions and deletions.
+* 
+* @param oldText 
+* @param newText 
+* @returns 
+*/
+const diffText = (oldText, newText) => {
+	return diff(newText, oldText).map((part) => {
+		const [type$1, text] = part;
+		if (type$1 === 0) return text;
+		else if (type$1 === -1) return logger(text, ["red", "strikethrough"], !1);
+		else return logger(text, ["green", "underline"], !1);
+	}).join("");
+};
 
 //#endregion
 //#region src/Commands/Commands.ts
 var Commands_default = () => {
+	const require = createRequire(import.meta.url);
 	const commands = [];
+	let GeneratedAPIs = apis_default;
+	if (!process.argv.includes("generate:apis") && existsSync(path.join(process.cwd(), ".grithub/apis.generated.js"))) ({APIs: GeneratedAPIs} = require(path.join(process.cwd(), ".grithub/apis.generated.js")));
 	/**
 	* We should map through the APIs and reduce all apis to a single key value pair
 	* where key is the API key and the schema array entry api propety separated by a 
 	* semicolon and the value is schema array entry.
 	*/
-	const entries = Object.entries(apis_default).reduce((acc, [key, schemas]) => {
+	const entries = Object.entries(GeneratedAPIs).reduce((acc, [key, schemas]) => {
 		schemas.forEach((schema) => {
-			const commandKey = key === schema.api ? key : `${key}:${schema.api}`;
+			const commandKey = key === schema.api ? key : `${key}:${(schema.alias ?? schema.api).toKebabCase()}`;
 			acc[commandKey] = schema;
 		});
 		return acc;
@@ -2537,21 +575,28 @@ var Commands_default = () => {
 			signature = `${key} \n${args}`;
 			description = schema.description || "No description available.";
 			handle = async () => {
+				const root = key.split(":").shift();
+				const $args = {
+					...this.arguments() ?? {},
+					...this.options() ?? {}
+				};
 				const [_, setCommand] = useCommand();
 				setCommand(this);
+				if (!root) return void this.error("Unknown command entry.").newLine();
 				for (const param of schema.params) if (param.required && !this.argument(param.parameter)) return void this.newLine().error(`Missing required argument: ${param.parameter}`).newLine();
-				const selected_integration = read("selected_integration")?.id;
-				const user = read("user")?.id;
-				if (!selected_integration || !user) {
-					this.error("ERROR: You're not signed in, please run the [login] command before you begin").newLine();
-					return;
-				}
+				const repo = read("default_repo");
+				const token = read("token");
+				const repository = ([$args.owner, $args.repo].filter(Boolean).join("/") || repo.full_name).split("/") ?? ["", ""];
+				const requiresRepo = schema.params.some((param) => ["repo", "user"].includes(param.parameter));
+				if (requiresRepo && (!repository[0] || !repository[1])) return void this.error("ERROR: No repository set. Please set a default repository using the [set-repo] command or provide one using the --repo option.").newLine();
+				if (!token) return void this.error("ERROR: You're not signed in, please run the [login] command before you begin").newLine();
 				this.newLine();
-				const spinner = ora("Loading...\n").start();
-				const [err, result] = await promiseWrapper(executeSchema(schema, {
-					...this.options(),
-					...this.arguments()
-				}));
+				const spinner = this.spinner("Loading...\n").start();
+				if (requiresRepo) {
+					$args["owner"] = repository[0];
+					$args["repo"] = repository[1];
+				}
+				const [err, result] = await promiseWrapper(executeSchema(root, schema, $args));
 				if (err || !result) return void spinner.fail((err || "An error occurred") + "\n");
 				spinner.succeed(result.message);
 				this.newLine();
@@ -2566,27 +611,32 @@ var Commands_default = () => {
 
 //#endregion
 //#region src/utils/config.ts
-const configChoices = (config) => {
+const configChoices = (config$1) => {
 	return [
 		{
 			name: "Debug Mode",
 			value: "debug",
-			description: `Enable or disable debug mode (${config.debug ? "Enabled" : "Disabled"})`
+			description: `Enable or disable debug mode (${config$1.debug ? "Enabled" : "Disabled"})`
 		},
 		{
 			name: "API Base URL",
 			value: "apiBaseURL",
-			description: `Set the base URL for the API (${config.apiBaseURL})`
+			description: `Set the base URL for the API (${config$1.apiBaseURL})`
 		},
 		{
 			name: "Timeout Duration",
 			value: "timeoutDuration",
-			description: `Set the timeout duration for API requests (${config.timeoutDuration} ms)`
+			description: `Set the timeout duration for API requests (${config$1.timeoutDuration} ms)`
+		},
+		{
+			name: "Skip Long Command Generation",
+			value: "skipLongCommandGeneration",
+			description: `Enable or disable skipping of long command generation when calling ${logger("generate:apis", ["grey", "italic"])} (${config$1.skipLongCommandGeneration ? "Enabled" : "Disabled"})`
 		},
 		{
 			name: "Ngrok Auth Token",
 			value: "ngrokAuthToken",
-			description: `Set the Ngrok Auth Token - will default to environment variable if not set (${config.ngrokAuthToken ? "************" : "Not Set"})`
+			description: `Set the Ngrok Auth Token - will default to environment variable if not set (${config$1.ngrokAuthToken ? "************" : "Not Set"})`
 		},
 		{
 			name: "Reset Configuration",
@@ -2598,43 +648,231 @@ const configChoices = (config) => {
 const saveConfig = async (choice) => {
 	const [getConfig, setConfig] = useConfig();
 	const [command] = useCommand();
-	let config = getConfig();
+	let config$1 = getConfig();
 	if (choice === "debug") {
-		const debug = await command().confirm(`${config.debug ? "Dis" : "En"}able debug mode?`, config.debug === true);
-		config.debug = config.debug !== debug;
-	} else if (choice === "apiBaseURL") config.apiBaseURL = await command().ask("Enter API Base URL", config.apiBaseURL);
-	else if (choice === "ngrokAuthToken") config.ngrokAuthToken = await command().ask("Enter Ngrok Auth Token", config.ngrokAuthToken || "");
+		const debug = await command().confirm(`${config$1.debug ? "Dis" : "En"}able debug mode?`, config$1.debug === true);
+		config$1.debug = config$1.debug !== debug;
+	} else if (choice === "apiBaseURL") config$1.apiBaseURL = await command().ask("Enter API Base URL", config$1.apiBaseURL);
+	else if (choice === "ngrokAuthToken") config$1.ngrokAuthToken = await command().ask("Enter Ngrok Auth Token", config$1.ngrokAuthToken || "");
 	else if (choice === "timeoutDuration") {
-		const timeoutDuration = await command().ask("Enter Timeout Duration (in ms)", config.timeoutDuration.toString());
-		config.timeoutDuration = parseInt(timeoutDuration);
-	} else if (choice === "reset") config = {
+		const timeoutDuration = await command().ask("Enter Timeout Duration (in ms)", config$1.timeoutDuration.toString());
+		config$1.timeoutDuration = parseInt(timeoutDuration);
+	} else if (choice === "skipLongCommandGeneration") config$1.skipLongCommandGeneration = await command().confirm(`${config$1.skipLongCommandGeneration ? "Dis" : "En"}able skipping of long command generation?`, config$1.skipLongCommandGeneration === true);
+	else if (choice === "reset") config$1 = {
 		debug: false,
-		apiBaseURL: "https://api.paystack.co",
-		timeoutDuration: 3e3
+		apiBaseURL: "https://api.github.com",
+		timeoutDuration: 3e3,
+		skipLongCommandGeneration: true
 	};
-	setConfig(config);
+	setConfig(config$1);
 };
 
 //#endregion
 //#region src/Commands/ConfigCommand.ts
 var ConfigCommand = class extends Command {
 	signature = "config";
-	description = "Configure paystack cli";
+	description = "Configure Grithub";
 	async handle() {
 		const [_, setCommand] = useCommand();
 		setCommand(this);
 		const [getConfig, setConfig] = useConfig();
-		let config = getConfig();
-		if (!config) {
-			config = {
+		let config$1 = getConfig();
+		if (!config$1) {
+			config$1 = {
 				debug: false,
-				apiBaseURL: "https://api.paystack.co",
-				timeoutDuration: 3e3
+				apiBaseURL: "https://api.github.com",
+				timeoutDuration: 3e3,
+				skipLongCommandGeneration: true
 			};
-			setConfig(config);
+			setConfig(config$1);
 		}
-		await saveConfig(await this.choice("Select configuration to set", configChoices(config)));
+		await saveConfig(await this.choice("Select configuration to set", configChoices(config$1)));
 		this.info("Configuration updated successfully!").newLine();
+	}
+};
+
+//#endregion
+//#region src/github/apis-generator.ts
+var ApisGenerator = class ApisGenerator {
+	spec;
+	config;
+	openapi;
+	skipApis = new Set([
+		"issues:list",
+		"issues:update",
+		"issues:seed",
+		"issues:delete"
+	]);
+	skipParams = new Set(["s"]);
+	PARAM_LOCATIONS = new Set([
+		"path",
+		"query",
+		"header"
+	]);
+	constructor(openapi, schema = "api.github.com.deref") {
+		const [getConfig] = useConfig();
+		this.openapi = openapi;
+		this.spec = this.openapi.schemas[schema];
+		this.config = getConfig();
+		if (!this.spec || !this.spec.paths) throw new Error(`Could not find ${schema} schema`);
+	}
+	static async installOctokitOpenapi() {
+		const spinner = useCommand()[0]().spinner("Installing @octokit/openapi...").start();
+		const __dirname$1 = dirname(fileURLToPath(import.meta.url));
+		await installPackage("@octokit/openapi", {
+			cwd: path.normalize(path.join(__dirname$1, "../..")),
+			silent: true
+		});
+		spinner.succeed("@octokit/openapi installed successfully.");
+		return (await import("@octokit/openapi")).default;
+	}
+	skipParam(name) {
+		return this.skipParams.has(name) || name.length > 20 || name.length <= 2;
+	}
+	skipApi(api$1, namespace) {
+		const cmd = (namespace ? namespace + ":" : "") + api$1.toCamelCase();
+		return this.skipApis.has(cmd) || this.skipApis.has(api$1.toCamelCase()) || cmd.length > (this.config.skipLongCommandGeneration ? 23 : Infinity);
+	}
+	normalizeType(schema) {
+		const typeMap = {
+			integer: "Number",
+			number: "Number",
+			string: "String",
+			boolean: "Boolean",
+			array: "Array",
+			object: "Object",
+			enum: "String",
+			oneOf: "String",
+			anyOf: "String",
+			allOf: "String"
+		};
+		let type$1 = typeMap[schema?.type] || "any";
+		if (Array.isArray(schema?.type)) type$1 = schema.type.map((t) => typeMap[t] || "any").join("|");
+		if (type$1 !== "any") return type$1;
+		if (!schema) type$1 = "any";
+		if (Array.isArray(schema.type)) return schema.type.join("|");
+		if (schema.type) type$1 = schema.type;
+		if (schema.enum) type$1 = "enum";
+		if (schema.oneOf) type$1 = "oneOf";
+		if (schema.anyOf) type$1 = "anyOf";
+		if (schema.allOf) type$1 = "allOf";
+		return typeMap[type$1] || "any";
+	}
+	gatherParams(op) {
+		const collected = [];
+		for (const p of op.parameters ?? []) {
+			const loc = this.PARAM_LOCATIONS.has(p.in) ? p.in : "query";
+			if (this.skipParam(p.name)) continue;
+			collected.push({
+				parameter: p.name,
+				required: !!p.required,
+				type: this.normalizeType(p.schema).toPascalCase(),
+				description: p.description,
+				paramType: loc
+			});
+		}
+		const jsonBody = op.requestBody?.content?.["application/json"];
+		const bodySchema = jsonBody?.schema;
+		const bodyProps = bodySchema?.properties ?? {};
+		const requiredProps = bodySchema?.required ?? [];
+		for (const [name, schema] of Object.entries(bodyProps)) {
+			if (this.skipParam(name)) continue;
+			collected.push({
+				parameter: name,
+				required: requiredProps.includes(name) || !!jsonBody?.required,
+				type: this.normalizeType(schema).toPascalCase(),
+				description: schema.description,
+				paramType: "body"
+			});
+		}
+		return collected;
+	}
+	buildTree() {
+		const tree = {};
+		for (const [route, ops] of Object.entries(this.spec.paths)) for (const [_method, def] of Object.entries(ops ?? {})) {
+			const op = def;
+			const opId = op?.operationId;
+			if (!opId) continue;
+			const [namespace, name] = opId.split("/");
+			if (!namespace || !name || this.skipApi(name, namespace)) continue;
+			const params = this.gatherParams(op);
+			if (!tree[namespace.toCamelCase()]) tree[namespace.toCamelCase()] = [];
+			tree[namespace.toCamelCase()].push({
+				api: name.toCamelCase(),
+				endpoint: route,
+				description: op.summary ?? op.description ?? void 0,
+				alias: op["x-github"]?.alias ?? op["x-octokit"]?.alias ?? void 0,
+				params
+			});
+		}
+		return tree;
+	}
+	static async run() {
+		const [cmd] = useCommand();
+		const command = cmd();
+		let octokitOpenapi;
+		const spinner = command.spinner("Checking if @octokit/openapi Installed...").start();
+		try {
+			({default: octokitOpenapi} = await import("@octokit/openapi"));
+			spinner.succeed("@octokit/openapi is already installed.");
+		} catch {
+			spinner.fail("@octokit/openapi is not installed.");
+			octokitOpenapi = await ApisGenerator.installOctokitOpenapi();
+		}
+		spinner.start("Generating Extended APIs...");
+		const tree = new ApisGenerator(octokitOpenapi, "api.github.com.deref").buildTree();
+		const target = path.join(process.cwd(), ".grithub/apis.generated.js");
+		const contents = `// Auto-generated from @octokit/openapi. Do not edit directly.
+
+export const APIs = ${JSON.stringify(tree, null, 2).replace(/"([A-Za-z_][\w$]*)":/g, "$1:").replace(/:\s*"((?:[^"\\]|\\.)*)"/g, (_, p1) => `: '${p1.replace(/\\"/g, "\"").replace(/'/g, "\\'")}'`)}\n\nexport default APIs\n`;
+		mkdirSync(path.dirname(target), { recursive: true });
+		writeFileSync(target, contents, "utf8");
+		spinner.succeed("Generated Extended APIs to: " + target);
+	}
+};
+
+//#endregion
+//#region src/Commands/GenerateApisCommand.ts
+var GenerateApisCommand = class extends Command {
+	signature = "generate:apis";
+	description = "Generate extended API definitions from the GitHub OpenAPI spec";
+	async handle() {
+		const [_, setCommand] = useCommand();
+		setCommand(this);
+		ApisGenerator.run();
+	}
+};
+
+//#endregion
+//#region src/Commands/InfoCommand.ts
+var InfoCommand = class extends Command {
+	signature = "info";
+	description = "Display application runtime information.";
+	async handle() {
+		let pkg = {
+			version: "unknown",
+			dependencies: {}
+		};
+		const user = read("user");
+		const pkgPath = findCLIPackageJson();
+		const require = createRequire$1(import.meta.url);
+		const [_, setCommand] = useCommand();
+		const [dbPath$1] = useDbPath();
+		setCommand(this);
+		init();
+		const spinner = this.spinner("Gathering application information...\n").start();
+		if (pkgPath) try {
+			pkg = require(pkgPath);
+		} catch {}
+		wait(500, () => {
+			spinner.succeed("Application Information Loaded.\n");
+			const out = new Table();
+			out.push({ "App Version": pkg.version }, { "Platform": `${os.platform()} ${os.arch()} (${os.release()})` }, { "CPUs": os.cpus().length }, { "Host": `${os.userInfo().username}@${os.hostname()}` }, { "Memory": `${(os.freemem() / 1024 ** 3).toFixed(2)} GB / ${(os.totalmem() / 1024 ** 3).toFixed(2)} GB` }, { "Database Path": path$1.join(dbPath$1, "app.db") }, { "Github User": user ? `${user.login} (ID: ${user.id})` : "Not logged in" }, { "Default Repo": read("default_repo")?.full_name || "Not set" });
+			console.log(out.toString());
+			Logger.log("\nDependencies:", "yellow");
+			Logger.log(Object.keys(pkg.dependencies).map((dep) => `${dep}`).join(", "), "green");
+			this.newLine();
+		});
 	}
 };
 
@@ -2652,496 +890,869 @@ var InitCommand = class extends Command {
 };
 
 //#endregion
-//#region src/paystack/webhooks.ts
-const webhook = {
-	"charge.success": {
-		event: "charge.success",
-		data: {
-			id: 302961,
-			domain: "live",
-			status: "success",
-			reference: "qTPrJoy9Bx",
-			amount: 1e4,
-			message: null,
-			gateway_response: "Approved by Financial Institution",
-			paid_at: "2016-09-30T21:10:19.000Z",
-			created_at: "2016-09-30T21:09:56.000Z",
-			channel: "card",
-			currency: "NGN",
-			ip_address: "41.242.49.37",
-			metadata: 0,
-			log: {
-				time_spent: 16,
-				attempts: 1,
-				authentication: "pin",
-				errors: 0,
-				success: false,
-				mobile: false,
-				input: [],
-				channel: null,
-				history: [
-					{
-						type: "input",
-						message: "Filled these fields: card number, card expiry, card cvv",
-						time: 15
-					},
-					{
-						type: "action",
-						message: "Attempted to pay",
-						time: 15
-					},
-					{
-						type: "auth",
-						message: "Authentication Required: pin",
-						time: 16
+//#region src/github/issues-seeder.ts
+/**
+* GitHub Issues Creator
+* 
+* This script reads markdown issue files from the issues directory
+* and creates them as GitHub issues using the GitHub API.
+*/
+var IssuesSeeder = class {
+	command;
+	constructor() {
+		const [command] = useCommand();
+		this.command = command();
+	}
+	/**
+	* Set filename in issue content
+	* 
+	* @param content 
+	* @param fileName 
+	*/
+	setFilePath(content, filePath) {
+		if (!filePath) return content;
+		if (content.includes("<!-- grithub#filepath:")) content = content.replace(/<!--\s*grithub#filepath:\s*.+?\s*-->/i, `<!-- grithub#filepath: ${filePath} -->`);
+		else content = `<!-- grithub#filepath: ${filePath} -->\n\n` + content;
+		return content;
+	}
+	/**
+	* Get filename from issue content
+	* 
+	* @param content 
+	* @returns 
+	*/
+	getFilePath(content) {
+		const match = content.match(/<!--\s*grithub#filepath:\s*(.+?)\s*-->/i);
+		if (match) return match[1].trim();
+	}
+	/**
+	* Parse frontmatter from markdown file
+	* 
+	* @param content 
+	* @returns 
+	*/
+	parseFrontmatter(content) {
+		const match = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+		if (!match) return {
+			metadata: {},
+			body: content
+		};
+		const [, frontmatter, body] = match;
+		const metadata = {};
+		const lines = frontmatter.split("\n");
+		let currentKey = null;
+		for (const line of lines) {
+			const keyValueMatch = line.match(/^(\w+):\s*['"]?(.*?)['"]?$/);
+			if (keyValueMatch) {
+				const [, key, value] = keyValueMatch;
+				currentKey = key;
+				metadata[key] = value;
+			} else if (currentKey && line.trim()) metadata[currentKey] += "\n" + line.trim();
+		}
+		return {
+			metadata,
+			body: body.trim()
+		};
+	}
+	/**
+	* Create a GitHub issue
+	* 
+	* @param entry 
+	* @param owner 
+	* @param repo 
+	* @returns 
+	*/
+	async updateIssue(entry, issue, owner, repo) {
+		try {
+			const { data } = await useOctokit().issues.update({
+				repo,
+				owner,
+				issue_number: issue.number,
+				body: this.setFilePath(entry.body, entry.filePath),
+				title: entry.title,
+				labels: entry.labels || [],
+				assignees: entry.assignees || []
+			});
+			return data;
+		} catch (error) {
+			throw this.requestError(error, owner, repo);
+		}
+	}
+	/**
+	* Create a GitHub issue
+	* 
+	* @param entry 
+	* @param owner 
+	* @param repo 
+	* @returns 
+	*/
+	async createIssue(entry, owner, repo) {
+		try {
+			const { data } = await useOctokit().issues.create({
+				repo,
+				owner,
+				type: entry.type,
+				body: this.setFilePath(entry.body, entry.filePath),
+				title: entry.title,
+				labels: entry.labels || [],
+				assignees: entry.assignees || []
+			});
+			return data;
+		} catch (error) {
+			throw this.requestError(error, owner, repo);
+		}
+	}
+	/**
+	* Read all issue files from a directory
+	*/
+	getIssueFiles(dir) {
+		const files = [];
+		const spinner = this.command.spinner("Reading issue files...").start();
+		const traverse = (currentDir) => {
+			const entries = fs.readdirSync(currentDir, { withFileTypes: true });
+			for (const entry of entries) {
+				const fullPath = path$1.join(currentDir, entry.name);
+				if (entry.isDirectory()) traverse(fullPath);
+				else if (entry.isFile() && entry.name.endsWith(".md")) files.push(fullPath);
+			}
+		};
+		traverse(dir);
+		const sortedFiles = files.sort();
+		spinner.succeed(`Found ${sortedFiles.length} issue files`);
+		if (sortedFiles.length === 0) {
+			spinner.info("No issue files found. Exiting.");
+			process.exit(0);
+		}
+		return sortedFiles;
+	}
+	/**
+	* Process a single issue file
+	* 
+	* @param filePath 
+	* @returns 
+	*/
+	processIssueFile(filePath) {
+		const directory = join$1(process.cwd(), this.command.argument("directory", "issues"));
+		const content = fs.readFileSync(filePath, "utf-8");
+		const { metadata, body } = this.parseFrontmatter(content);
+		const relativePath = path$1.relative(directory, filePath);
+		const fileName = path$1.basename(filePath, ".md");
+		let labels = [];
+		if (metadata.labels) labels = metadata.labels.split(",").map((l) => l.trim()).filter((l) => l);
+		let assignees = [];
+		if (metadata.assignees && metadata.assignees.trim()) assignees = metadata.assignees.split(",").map((a) => a.trim()).filter((a) => a);
+		return {
+			filePath: relativePath,
+			title: metadata.title || metadata.name || fileName,
+			type: metadata.type,
+			body,
+			labels,
+			assignees,
+			fileName
+		};
+	}
+	/**
+	* Validate GitHub token and repository access
+	* 
+	* @param owner 
+	* @param repo 
+	* @returns 
+	*/
+	async validateAccess(owner, repo) {
+		const spinner = this.command.spinner("Checking GitHub access...").start();
+		try {
+			return await useOctokit().repos.get({
+				owner,
+				repo
+			});
+		} catch (error) {
+			spinner.stop();
+			let message = "";
+			if (error.status === 404) message = `ERROR: ${error.message}\n\nThis usually means:
+  1. No internet connection
+  2. DNS server issues
+  3. Firewall/proxy blocking DNS
+
+Troubleshooting:
+  - Check your internet connection
+  - Try opening https://github.com in your browser
+  - If behind a corporate firewall, check proxy settings
+  - Try using a different DNS (e.g., 8.8.8.8)
+
+Original error: ${error.message}`;
+			else message = `ERROR: GitHub access validation failed: ${error.message}`;
+			throw new Error(message);
+		} finally {
+			spinner.succeed("GitHub access validated successfully.");
+		}
+	}
+	/**
+	* Check network connectivity to GitHub
+	*/
+	async checkConnectivity() {
+		const spinner = this.command.spinner("Checking network connectivity...").start();
+		try {
+			const addresses = await dns.resolve("api.github.com");
+			spinner.succeed(`DNS resolution successful: ${Logger.log(addresses[0], "blue", !1)}`);
+			return addresses;
+		} catch (error) {
+			spinner.stop();
+			throw new Error(`ERROR: Cannot resolve api.github.com
+
+This usually means:
+  1. No internet connection
+  2. DNS server issues
+  3. Firewall/proxy blocking DNS
+
+Troubleshooting:
+  - Check your internet connection
+  - Try opening https://github.com in your browser
+  - If behind a corporate firewall, check proxy settings
+  - Try using a different DNS (e.g., 8.8.8.8)
+
+Original error: ${error.message}`);
+		}
+	}
+	/**
+	* Fetch all open issues from the repository
+	* 
+	* @param owner 
+	* @param repo 
+	* @param state 
+	* @returns 
+	*/
+	async fetchExistingIssues(owner, repo, state) {
+		const issues = [];
+		let page = 1;
+		let hasMore = true;
+		const spinner = this.command.spinner("Fetching existing open issues...").start();
+		while (hasMore) try {
+			const { data } = await useOctokit().issues.listForRepo({
+				owner,
+				repo,
+				state: state || "open",
+				per_page: 100,
+				page
+			});
+			issues.push(...data.filter((issue) => !issue.pull_request));
+			spinner.stop();
+			hasMore = issues.length % 100 === 0 && data.length === 100;
+			if (hasMore) page++;
+			else hasMore = false;
+		} catch (error) {
+			hasMore = false;
+			spinner.stop();
+			this.command.warn(`ERROR: Failed to fetch existing issues: ${error.message}`);
+			this.command.warn("INFO: Proceeding without duplicate check...");
+		}
+		spinner.succeed(`Found ${issues.length} existing issues.`);
+		return issues;
+	}
+	/**
+	* Handle GitHub API request errors
+	* 
+	* @param error 
+	* @param owner 
+	* @param repo 
+	* @returns 
+	*/
+	requestError(error, owner, repo) {
+		let errorMsg = error.message || "GitHub API error";
+		if (error.status === 401) {
+			errorMsg += "\n\nThis is an authentication error. Check that:";
+			errorMsg += `\n  1. You are logged in (make sure to run the ${Logger.log("login", ["grey", "italic"], !1)}`;
+			errorMsg += "command first)";
+			errorMsg += "\n  2. The app token has \"repo\" scope";
+			errorMsg += "\n  3. The app token hasn't expired";
+		} else if (error.status === 404) {
+			errorMsg += "\n\nRepository not found. Check that:";
+			if (owner) errorMsg += `\n  1. ${Logger.log(owner, ["blue", "bold"], !1)} is a valid gitHub username or organization`;
+			if (repo) errorMsg += `\n  2. ${Logger.log(repo, ["blue", "bold"], !1)} is the correct repository name`;
+			errorMsg += "\n  3. You have access to this repository";
+		} else if (error.status === 422) {
+			errorMsg += "\n\nValidation failed. This usually means:";
+			errorMsg += "\n  1. Issue data format is invalid";
+			errorMsg += "\n  2. Labels don't exist in the repository";
+			errorMsg += "\n  3. Assignees don't have access to the repository";
+		}
+		return new Error(errorMsg);
+	}
+};
+
+//#endregion
+//#region src/github/actions.ts
+/**
+* Delete an issue from a repository.
+* 
+* Github API does not support deleting issues via REST API.
+* As a workaround, we will use the GraphQL API to delete the issue
+* 
+* @param owner 
+* @param repo 
+* @param issue_number 
+*/
+const deleteIssue = async (owner, repo, issue_number, node_id) => {
+	const octokit = useOctokit();
+	let issueId = node_id;
+	if (!issueId) ({repository: {issue: {id: issueId}}} = await octokit.graphql(`
+            query ($owner: String!, $repo: String!, $issue_number: Int!) {
+                repository(owner: $owner, name: $repo) {
+                    issue(number: $issue_number) {
+                        id
+                    }
+                }
+            }
+        `, {
+		owner,
+		repo,
+		issue_number
+	}));
+	await octokit.graphql(`
+        mutation ($issueId: ID!) {
+            deleteIssue(input: {issueId: $issueId}) {
+                clientMutationId
+            }
+        }
+    `, { issueId });
+};
+
+//#endregion
+//#region src/Commands/IssuesCommand.ts
+var IssuesCommand = class extends Command {
+	signature = `issues
+        { repo? : The full name of the repository (e.g., username/repo)}
+    `;
+	description = "Manage issues in the default repository.";
+	async handle() {
+		const [_, setCommand] = useCommand();
+		setCommand(this);
+		const repo = read("default_repo");
+		const repository = this.argument("repo", repo.full_name).split("/") ?? ["", ""];
+		const spinner = this.spinner("Fetching issues...").start();
+		try {
+			let page = 1;
+			const issues = [];
+			do {
+				const newIssues = await this.loadIssues(repository, page);
+				issues.push(...newIssues);
+				spinner.succeed(`${issues.length} issues fetched successfully.`);
+				const choice = await this.choice("Select Issue", issues.map((issue) => ({
+					name: `#${issue.number}: ${issue.state === "open" ? "🟢" : "🔴"} ${issue.title}`,
+					value: String(issue.number)
+				})).concat(issues.length === 20 ? [{
+					name: "Load more issues",
+					value: ">>"
+				}] : []), 0);
+				if (choice === ">>") page++;
+				else {
+					const issue = issues.find((issue$1) => String(issue$1.number) === choice);
+					this.info(`#${issue.number}: ${issue.title}`).newLine();
+					const action = await this.choice("Choose Action", [
+						{
+							name: "View Details",
+							value: "view"
+						},
+						!issue.closed_at ? {
+							name: "Close Issue",
+							value: "close"
+						} : null,
+						issue.closed_at ? {
+							name: "Reopen Issue",
+							value: "reopen"
+						} : null,
+						{
+							name: "Edit Issue",
+							value: "edit"
+						},
+						{
+							name: logger("Delete Issue", ["red", "italic"]),
+							value: "delete"
+						},
+						{
+							name: "Exit",
+							value: "exit"
+						}
+					].filter((e) => !!e), 0);
+					if (action === "view") {
+						viewIssue(issue);
+						this.newLine();
+					} else if (action === "close") if (issue.state === "closed") this.warn("Issue is already closed.").newLine();
+					else {
+						spinner.start(`Closing issue #${issue.number}...`);
+						await useOctokit().issues.update({
+							owner: repository[0],
+							repo: repository[1],
+							issue_number: issue.number,
+							state: "closed"
+						});
+						spinner.succeed(`Issue #${issue.number} closed successfully.`);
 					}
-				]
-			},
-			fees: null,
-			customer: {
-				id: 68324,
-				first_name: "BoJack",
-				last_name: "Horseman",
-				email: "bojack@horseman.com",
-				customer_code: "CUS_qo38as2hpsgk2r0",
-				phone: null,
-				metadata: null,
-				risk_action: "default"
-			},
-			authorization: {
-				authorization_code: "AUTH_f5rnfq9p",
-				bin: "539999",
-				last4: "8877",
-				exp_month: "08",
-				exp_year: "2020",
-				card_type: "mastercard DEBIT",
-				bank: "Guaranty Trust Bank",
-				country_code: "NG",
-				brand: "mastercard"
-			},
-			plan: {}
+					else if (action === "reopen") if (issue.state === "open") this.warn("Issue is already open.").newLine();
+					else {
+						spinner.start(`Reopening issue #${issue.number}...`);
+						await useOctokit().issues.update({
+							owner: repository[0],
+							repo: repository[1],
+							issue_number: issue.number,
+							state: "open"
+						});
+						spinner.succeed(`Issue #${issue.number} reopened successfully.`);
+					}
+					else if (action === "edit") {
+						const whatToEdit = await this.choice("What do you want to edit?", [{
+							name: "Title",
+							value: "title"
+						}, {
+							name: "Body",
+							value: "body"
+						}], 0);
+						if (whatToEdit === "exit") return;
+						const updates = {};
+						if (whatToEdit === "title") updates.title = await this.ask("Enter new title:", issue.title);
+						else if (whatToEdit === "body") updates.body = await this.editor("Edit issue body:", ".md", issue.body ?? "");
+						if (Object.keys(updates).length > 0) {
+							const seeder = new IssuesSeeder();
+							spinner.start(`Updating issue #${issue.number}...`);
+							await seeder.updateIssue(Object.assign({
+								labels: issue.labels,
+								assignees: issue.assignees
+							}, updates), issue, ...repository);
+							spinner.succeed(`Issue #${issue.number} updated successfully.`);
+						} else this.info("No changes made to the issue.").newLine();
+					} else if (action === "delete") {
+						spinner.start(`Deleting issue #${issue.number}...`);
+						await deleteIssue(repository[0], repository[1], issue.number, issue.node_id);
+						spinner.succeed(`Issue #${issue.number} deleted successfully.`);
+					} else if (action === "exit") return;
+					return;
+				}
+			} while (issues.length === 20);
+		} catch (error) {
+			spinner.stop();
+			this.error(error.message);
+			return;
 		}
-	},
-	"transfer.success": {
-		event: "transfer.success",
-		data: {
-			domain: "live",
-			amount: 1e4,
-			currency: "NGN",
-			source: "balance",
-			source_details: null,
-			reason: "Bless you",
-			recipient: {
-				domain: "live",
-				type: "nuban",
-				currency: "NGN",
-				name: "Someone",
-				details: {
-					account_number: "0123456789",
-					account_name: null,
-					bank_code: "058",
-					bank_name: "Guaranty Trust Bank"
-				},
-				description: null,
-				metadata: null,
-				recipient_code: "RCP_xoosxcjojnvronx",
-				active: true
-			},
-			status: "success",
-			transfer_code: "TRF_zy6w214r4aw9971",
-			transferred_at: "2017-03-25T17:51:24.000Z",
-			created_at: "2017-03-25T17:48:54.000Z"
+	}
+	async loadIssues(repository, page = 1) {
+		let issues = [];
+		({data: issues} = await useOctokit().issues.listForRepo({
+			page,
+			repo: repository[1],
+			owner: repository[0],
+			per_page: 20,
+			state: "all"
+		}));
+		return issues.filter((issue) => !issue.pull_request);
+	}
+};
+
+//#endregion
+//#region src/Commands/IssuesDeleteCommand.ts
+var IssuesDeleteCommand = class extends Command {
+	signature = `issues:delete
+        { repo? : The full name of the repository (e.g., username/repo)}
+        {--dry-run : Simulate the deletion without actually deleting issues.}
+    `;
+	description = "Delete issues from the specified repository.";
+	async handle() {
+		const [_, setCommand] = useCommand();
+		setCommand(this);
+		const repo = read("default_repo");
+		const repository = this.argument("repo", repo.full_name).split("/") ?? ["", ""];
+		const spinner = this.spinner("Fetching issues...").start();
+		const isDryRun = this.option("dryRun", false);
+		try {
+			const issues = await this.loadIssues(repository);
+			spinner.succeed(`${issues.length} issues fetched successfully.`);
+			const choices = await this.checkbox(`Select Issue${isDryRun ? " (Dry Run)" : ""}`, issues.map((issue) => ({
+				name: `#${issue.number}: ${issue.state === "open" ? "🟢" : "🔴"} ${issue.title}`,
+				value: String(issue.number)
+			})), true, void 0, 20);
+			if (!await this.confirm(`Are you sure you want to delete the selected ${choices.length} issue(s)? ${isDryRun ? "(Dry Run - No changes will be made)" : "This action cannot be undone"}.`)) {
+				this.info("Operation cancelled.");
+				return;
+			}
+			for (const issue of issues.filter((issue$1) => choices.includes(String(issue$1.number)))) {
+				spinner.start(`Deleting issue #${issue.number}...`);
+				if (!isDryRun) {
+					await deleteIssue(repository[0], repository[1], issue.number, issue.node_id);
+					spinner.succeed(`Issue #${issue.number} deleted successfully.`);
+				} else spinner.info(`Dry run: Issue #${issue.number} would be deleted.`);
+			}
+			this.success(`${choices.length} issue(s) deleted successfully.`);
+		} catch (error) {
+			spinner.stop();
+			this.error(error.message);
+			return;
 		}
-	},
-	"subscription.create": {
-		event: "subscription.create",
-		data: {
-			domain: "test",
-			status: "active",
-			subscription_code: "SUB_vsyqdmlzble3uii",
-			amount: 5e4,
-			cron_expression: "0 0 28 * *",
-			next_payment_date: "2016-05-19T07:00:00.000Z",
-			open_invoice: null,
-			createdAt: "2016-03-20T00:23:24.000Z",
-			plan: {
-				name: "Monthly retainer",
-				plan_code: "PLN_gx2wn530m0i3w3m",
-				description: null,
-				amount: 5e4,
-				interval: "monthly",
-				send_invoices: true,
-				send_sms: true,
-				currency: "NGN"
-			},
-			authorization: {
-				authorization_code: "AUTH_96xphygz",
-				bin: "539983",
-				last4: "7357",
-				exp_month: "10",
-				exp_year: "2017",
-				card_type: "MASTERCARD DEBIT",
-				bank: "GTBANK",
-				country_code: "NG",
-				brand: "MASTERCARD"
-			},
-			customer: {
-				first_name: "BoJack",
-				last_name: "Horseman",
-				email: "bojack@horsinaround.com",
-				customer_code: "CUS_xnxdt6s1zg1f4nx",
-				phone: "",
-				metadata: {},
-				risk_action: "default"
-			},
-			created_at: "2016-10-01T10:59:59.000Z"
-		}
-	},
-	"transfer.failed": {
-		event: "transfer.failed",
-		data: {
-			domain: "test",
-			amount: 1e4,
-			currency: "NGN",
-			source: "balance",
-			source_details: null,
-			reason: "Test",
-			recipient: {
-				domain: "live",
-				type: "nuban",
-				currency: "NGN",
-				name: "Test account",
-				details: {
-					account_number: "0000000000",
-					account_name: null,
-					bank_code: "058",
-					bank_name: "Zenith Bank"
-				},
-				description: null,
-				metadata: null,
-				recipient_code: "RCP_7um8q67gj0v4n1c",
-				active: true
-			},
-			status: "failed",
-			transfer_code: "TRF_3g8pc1cfmn00x6u",
-			transferred_at: null,
-			created_at: "2017-12-01T08:51:37.000Z"
+	}
+	async loadIssues(repository) {
+		let issues = [];
+		({data: issues} = await useOctokit().issues.listForRepo({
+			repo: repository[1],
+			owner: repository[0],
+			per_page: 20,
+			state: "all"
+		}));
+		return issues.filter((issue) => !issue.pull_request);
+	}
+};
+
+//#endregion
+//#region src/Commands/IssuesSeedCommand.ts
+var IssuesSeedCommand = class extends Command {
+	signature = `issues:seed
+        {directory=issues : The directory containing issue files to seed from.}
+        {--r|repo? : The repository to seed issues into. If not provided, the default repository will be used.}
+        {--dry-run : Simulate the deletion without actually deleting issues.}
+    `;
+	description = "Seed the database with issues from a preset directory.";
+	async handle() {
+		const [_, setCommand] = useCommand();
+		setCommand(this);
+		const directory = join(process.cwd(), this.argument("directory", "issues"));
+		const isDryRun = this.option("dryRun", false);
+		const repo = read("default_repo");
+		if (!repo) return void this.error(`ERROR: No default repository set. Please set a default repository using the ${logger("set-repo", ["grey", "italic"])} command.`);
+		const seeder = new IssuesSeeder();
+		try {
+			const usernameRepo = this.option("repo", repo.full_name).split("/") ?? ["", ""];
+			await seeder.checkConnectivity();
+			await seeder.validateAccess(...usernameRepo);
+			if (!existsSync(directory)) {
+				this.error(`ERROR: Issues directory not found: ${logger(directory, ["grey", "italic"])}`);
+				return;
+			}
+			const issueFiles = seeder.getIssueFiles(directory);
+			const existingIssues = await seeder.fetchExistingIssues(...usernameRepo, "all");
+			const existingIssuePaths = new Set(existingIssues.map((i) => seeder.getFilePath(i.body ?? "")));
+			const issues = issueFiles.map(seeder.processIssueFile.bind(seeder)).filter(Boolean);
+			const toCreate = [];
+			const toSkip = [];
+			issues.forEach((issue) => {
+				if (existingIssuePaths.has(issue.filePath)) {
+					const existingIssue = existingIssues.find((ei) => ei.title.toLowerCase() === issue.title.toLowerCase());
+					toSkip.push({
+						issue,
+						existingIssue
+					});
+				} else toCreate.push(issue);
+			});
+			if (toSkip.length > 0) {
+				this.newLine().info("INFO: Issues to SKIP (already exist):");
+				toSkip.forEach(({ issue, existingIssue }) => {
+					logger(`  >  ${issue.title}`, "white", !0);
+					logger(`     Existing: #${existingIssue.number} (${existingIssue.state})`, "white", !0);
+				});
+			}
+			if (toCreate.length > 0) {
+				this.newLine().info("INFO: Issues to CREATE:").newLine();
+				toCreate.forEach((issue, index) => {
+					logger(`${index + 1}. ${issue.title}`, "white", !0);
+				});
+				this.newLine();
+			} else {
+				this.newLine().success("INFO: No new issues to create. All issues already exist").newLine();
+				Logger.log([["☑ Total files:", "white"], [issues.length.toString(), "blue"]], " ");
+				Logger.log([["> Skipped:", "white"], [toSkip.length.toString(), "blue"]], " ");
+				Logger.log([["± To create:", "white"], [toCreate.length.toString(), "blue"]], " ");
+				this.newLine();
+				return;
+			}
+			Logger.log([
+				["⚠️ ", "white"],
+				[" CONFIRM ", "bgYellow"],
+				["This will create", "yellow"],
+				[toCreate.length.toString(), "blue"],
+				["new issues on GitHub.", "yellow"]
+			], " ");
+			if (toSkip.length > 0) this.info(`(Skipping ${toSkip.length} existing issues)`);
+			if (await this.confirm(`Do you want to proceed?${isDryRun ? " (Dry Run - No changes will be made)" : ""}`)) {
+				this.newLine();
+				let created = 0;
+				let failed = 0;
+				const spinner = this.spinner("Creating issues...").start();
+				for (const issue of toCreate) try {
+					spinner.start(`Creating: ${issue.title}...`);
+					if (!isDryRun) {
+						const result = await seeder.createIssue(issue, ...usernameRepo);
+						spinner.succeed(`Created #${result.number}: ${result.title}`);
+						this.info(`URL: ${result.html_url}\n`);
+					} else spinner.info(`Dry run: Issue ${logger(issue.title, ["cyan", "italic"])} would be created.`);
+					created++;
+					await wait(1e3);
+				} catch (error) {
+					this.error(`ERROR: Failed to create Issue: ${logger(issue.title, ["cyan", "italic"])}`);
+					this.error(`ERROR: ${error.message}\n`);
+					failed++;
+				}
+				spinner.succeed(`All ${toCreate.length} issues processed.`);
+				Logger.log([
+					["=========================", "white"],
+					[`✔ Created: ${created}`, "white"],
+					[`x Failed: ${failed}`, "white"],
+					[`> Skipped: ${toSkip.length}`, "white"],
+					[`☑ Total: ${issues.length}`, "white"],
+					["========================", "white"]
+				], "\n");
+				this.newLine();
+			}
+		} catch (error) {
+			this.error(error.message);
+			return;
 		}
 	}
 };
-var webhooks_default = webhook;
 
 //#endregion
-//#region src/Paystack.ts
-/**
-* Select an integration
-* 
-* @param integrations 
-* @param token 
-* @returns 
-*/
-async function selectIntegration(integrations, token) {
-	const [command] = useCommand();
-	const id = await command().choice("Choose an integration", integrations.map((e) => {
-		return {
-			value: e.id?.toString() || "",
-			name: e.business_name || ""
-		};
-	}));
-	return new Promise((resolve, reject) => {
-		const integration = integrations.find((i) => i.id?.toString() === id);
-		if (!integration) {
-			reject("Invalid integration selected");
-			return;
-		}
-		axios_default.post("/user/switch_integration", { integration: integration.id }, { headers: {
-			Authorization: "Bearer " + token,
-			"jwt-auth": true
-		} }).then(() => {
-			resolve(integration);
-		}).catch((err) => {
-			command().error("ERROR: " + err.response.data);
-			reject(err);
-		});
-	});
-}
-/**
-* Refresh integration data
-* 
-* @returns 
-*/
-async function refreshIntegration() {
-	const [command] = useCommand();
-	let token = "";
-	const user_role = read("selected_integration").logged_in_user_role;
-	const integration = read("selected_integration");
-	if (parseInt(read("token_expiry")) * 1e3 > parseFloat(Date.now().toString())) {
-		token = read("token");
-		return true;
-	} else {
-		const password = await command().secret("What's your password: (" + read("user").email + ") \n>");
-		const [err$1, result] = await promiseWrapper(signIn(read("user").email, password));
-		if (err$1 || !result) return false;
-		token = result.data.token;
-	}
-	const [err, integrationData] = await promiseWrapper(getIntegration(integration.id, token));
-	if (err) {
-		command().error("ERROR: " + err);
-		return false;
-	}
-	if (integrationData) integrationData.logged_in_user_role = user_role;
-	write("selected_integration", integrationData);
-}
-/**
-* Set webhook URL for an integration
-* 
-* @param url 
-* @param token 
-* @param integrationId 
-* @param domain 
-* @returns 
-*/
-function setWebhook(url, token, integrationId, domain = "test") {
-	return new Promise((resolve, reject) => {
-		const data = {
-			[domain + "_webhook_endpoint"]: url,
-			integration: integrationId
-		};
-		axios_default.put("/integration/webhooks", data, { headers: {
-			Authorization: "Bearer " + token,
-			"jwt-auth": true
-		} }).then((resp) => {
-			const integration = read("selected_integration");
-			write("selected_integration", {
-				...integration,
-				[domain + "_webhook_endpoint"]: url
-			});
-			resolve(resp.data.message);
-		}).catch((err) => {
-			reject(err);
-		});
-	});
-}
-/**
-* Get integration keys
-* 
-* @param token 
-* @param type 
-* @param domain 
-* @returns 
-*/
-function getKeys(token, type = "secret", domain = "test") {
-	return new Promise((resolve, reject) => {
-		axios_default.get("/integration/keys", { headers: {
-			Authorization: "Bearer " + token,
-			"jwt-auth": true
-		} }).then((response) => {
-			let key = {};
-			const keys = response.data.data;
-			if (keys.length) {
-				for (let i = 0; i < keys.length; i++) if (keys[i].domain === domain && keys[i].type === type) {
-					key = keys[i];
-					break;
-				}
-			}
-			resolve(key.key);
-		}).catch((error) => {
-			if (error.response) {
-				reject(error.response.data.message);
+//#region src/Commands/IssuesUpdateCommand.ts
+var IssuesUpdateCommand = class extends Command {
+	signature = `issues:update
+        {directory=issues : The directory containing issue files to seed from.}
+        {--r|repo? : The repository to seed issues into. If not provided, the default repository will be used.}
+        {--dry-run : Simulate the deletion without actually deleting issues.}
+    `;
+	description = "Seed the database with updated issues from a preset directory.";
+	async handle() {
+		const [_, setCommand] = useCommand();
+		setCommand(this);
+		const directory = join(process.cwd(), this.argument("directory", "issues"));
+		const isDryRun = this.option("dryRun", false);
+		const repo = read("default_repo");
+		if (!repo) return void this.error(`ERROR: No default repository set. Please set a default repository using the ${logger("set-repo", ["grey", "italic"])} command.`);
+		const seeder = new IssuesSeeder();
+		try {
+			const usernameRepo = this.option("repo", repo.full_name).split("/") ?? ["", ""];
+			await seeder.checkConnectivity();
+			await seeder.validateAccess(...usernameRepo);
+			if (!existsSync(directory)) {
+				this.error(`ERROR: Issues directory not found: ${logger(directory, ["grey", "italic"])}`);
 				return;
 			}
-			reject(error);
-		});
-	});
-}
-/**
-* Ping webhook URL
-* 
-* @param options 
-* @param event 
-* @returns 
-*/
-async function pingWebhook(options, event = "charge.success") {
-	const [command] = useCommand();
-	let canProceed = false;
-	try {
-		canProceed = await refreshIntegration();
-	} catch (e) {
-		console.error(e);
-	}
-	let domain = "test";
-	if (options.domain) domain = options.domain;
-	if (options.event) event = options.event;
-	const key = await getKeys(read("token"), "secret", domain);
-	return new Promise((resolve, reject) => {
-		if (!canProceed) return void command().error("ERROR: Unable to ping webhook URL");
-		const eventObject = webhooks_default[event];
-		if (eventObject) {
-			const hash = crypto.createHmac("sha512", key).update(JSON.stringify(eventObject)).digest("hex");
-			const uri = read("selected_integration")[domain + "_webhook_endpoint"];
-			const spinner = ora(`Sending sample ${event} event payload to ${uri}`).start();
-			axios_default.post(uri, eventObject, { headers: { "x-paystack-signature": hash } }).then((response) => {
-				spinner.succeed(`Sample ${event} event payload sent to ${uri}`);
-				resolve({
-					code: response.status,
-					text: response.statusText,
-					data: response.data
-				});
-			}).catch((e) => {
-				spinner.fail(`Failed to send sample ${event} event payload to ${uri}`);
-				resolve({
-					code: e.response?.status ?? 0,
-					text: e.response?.statusText || "No response",
-					data: typeof e.response?.data === "string" && e.response?.data?.includes("<html") ? { response: "HTML Response" } : e.response?.data || "No response data"
-				});
+			const issueFiles = seeder.getIssueFiles(directory);
+			const existingIssues = await seeder.fetchExistingIssues(...usernameRepo, "all");
+			const existingIssuePaths = new Set(existingIssues.map((i) => seeder.getFilePath(i.body ?? "")));
+			const issues = issueFiles.map(seeder.processIssueFile.bind(seeder)).filter(Boolean);
+			const toSkip = [];
+			const toUpdate = [];
+			issues.forEach((issue) => {
+				if (existingIssuePaths.has(issue.filePath)) {
+					const existingIssue = existingIssues.find((ei) => seeder.getFilePath(ei.body ?? "") === issue.filePath);
+					toUpdate.push({
+						issue,
+						existingIssue
+					});
+				} else toSkip.push(issue);
 			});
-		} else {
-			command().error("ERROR: Invalid event type - " + event);
-			reject();
+			if (toSkip.length > 0) {
+				this.newLine().info("INFO: Issues to SKIP (not created):");
+				toSkip.forEach((issue, index) => {
+					logger(`${index + 1}. ${issue.title}`, "white", !0);
+					logger(`   File: ${issue.filePath} (${issue.type})`, "white", !0);
+				});
+			}
+			if (toUpdate.length > 0) {
+				this.newLine().info("INFO: Issues to UPDATE:").newLine();
+				toUpdate.forEach(({ issue, existingIssue }) => {
+					logger(`  >  ${diffText(issue.title, existingIssue.title)}`, "white", !0);
+					logger(`     Existing: #${existingIssue.number} (${existingIssue.state})`, "white", !0);
+				});
+				this.newLine();
+			} else {
+				this.newLine().success("INFO: No issues to update. All issues are up to date").newLine();
+				Logger.log([["☑ Total files:", "white"], [issues.length.toString(), "blue"]], " ");
+				Logger.log([["> Skipped:", "white"], [toSkip.length.toString(), "blue"]], " ");
+				Logger.log([["± To update:", "white"], [toUpdate.length.toString(), "blue"]], " ");
+				this.newLine();
+				return;
+			}
+			Logger.log([
+				["⚠️ ", "white"],
+				[" CONFIRM ", "bgYellow"],
+				["This will update", "yellow"],
+				[toUpdate.length.toString(), "blue"],
+				["existing issues on GitHub.", "yellow"]
+			], " ");
+			if (toSkip.length > 0) this.info(`(Skipping ${toSkip.length} existing issues)`);
+			if (await this.confirm(`Do you want to proceed?${isDryRun ? " (Dry Run - No changes will be made)" : ""}`)) {
+				this.newLine();
+				let updated = 0;
+				let failed = 0;
+				const spinner = this.spinner("Updating issues...").start();
+				for (const { issue, existingIssue } of toUpdate) try {
+					spinner.start(`Updating: ${issue.title}...`);
+					if (!isDryRun) {
+						const result = await seeder.updateIssue(issue, existingIssue, ...usernameRepo);
+						spinner.succeed(`Updated #${result.number}: ${result.title}`);
+						this.info(`URL: ${result.html_url}\n`);
+					} else spinner.info(`Dry run: Issue ${logger(issue.title, ["cyan", "italic"])} would be updated.`);
+					updated++;
+					await wait(1e3);
+				} catch (error) {
+					this.error(`ERROR: Failed to update Issue: ${logger(issue.title, ["cyan", "italic"])}`);
+					this.error(`ERROR: ${error.message}\n`);
+					failed++;
+				}
+				spinner.succeed(`All ${toUpdate.length} issues processed.`);
+				Logger.log([
+					["=========================", "white"],
+					[`✔ Updated: ${updated}`, "white"],
+					[`x Failed: ${failed}`, "white"],
+					[`> Skipped: ${toSkip.length}`, "white"],
+					[`☑ Total: ${issues.length}`, "white"],
+					["========================", "white"]
+				], "\n");
+				this.newLine();
+			}
+		} catch (error) {
+			this.error(error.message);
+			return;
 		}
-	});
-}
-/**
-* Get integration
-* 
-* @param id 
-* @param token 
-* @returns 
-*/
-function getIntegration(id, token) {
-	const [command] = useCommand();
-	const spinner = ora("getting integration").start();
-	return new Promise((resolve, reject) => {
-		axios_default.get("/integration/" + id, { headers: {
-			Authorization: "Bearer " + token,
-			"jwt-auth": true
-		} }).then((response) => {
-			resolve(response.data.data);
-		}).catch((e) => {
-			command().error(`ERROR: ${e}`);
-			reject(e.response.data.message);
-		}).finally(() => {
-			spinner.stop();
-		});
-	});
-}
+	}
+};
+
+//#endregion
+//#region src/config.ts
+const config = {
+	CLIENT_ID: process.env.GITHUB_CLIENT_ID,
+	CLIENT_TYPE: "oauth-app",
+	SCOPES: [
+		"repo",
+		"read:user",
+		"user:email"
+	]
+};
+
+//#endregion
+//#region src/Github.ts
 /**
 * Sign in user
 * 
-* @param email 
-* @param password 
-* @returns 
+* @returns
 */
-async function signIn(email, password) {
-	const [command] = useCommand();
-	const spinner = ora("Logging in...").start();
-	try {
-		const { data: response } = await axios_default.post("/login", {
-			email,
-			password
-		});
-		if (response && response.data && !response.data.mfa_required) {
-			spinner.succeed("Login successful");
-			return response;
-		} else if (response && response.data && response.data.mfa_required) {
-			spinner.stop();
-			const totp = await command().secret("Enter OTP or MFA code:", "*");
-			spinner.start("Verifying MFA...");
-			const [e, payload] = await promiseWrapper(verifyMfa(totp, response.data.token));
-			if (payload && !e) {
-				spinner.succeed("Login successful");
-				return payload;
-			} else spinner.fail(e ?? "MFA verification failed");
-		} else spinner.fail("Login failed");
-	} catch (e) {
-		spinner.fail(e.response?.data?.message?.text || e.response?.data?.message || "Unable to sign in, please try again in a few minutes");
+async function signIn() {
+	const [cmd] = useCommand();
+	const command = cmd();
+	let spinner = command.spinner("Requesting device code...").start();
+	const { data: { device_code, user_code, verification_uri, interval } } = await createDeviceCode({
+		clientType: config.CLIENT_TYPE,
+		clientId: config.CLIENT_ID,
+		scopes: config.SCOPES
+	});
+	spinner.succeed("Device code created");
+	Logger.log([["Your authentication code is", "white"], [`\n\t ${user_code} \n`, ["white", "bgBlue"]]], " ");
+	Logger.log([["Please open the following URL in your browser to authenticate:", "white"], [verification_uri, ["cyan", "underline"]]], " ");
+	Logger.log([
+		["Press Enter to open your browser, or ", "white"],
+		["Ctrl+C", ["grey", "italic"]],
+		[" to cancel", "white"]
+	], " ");
+	await waitForEnter(async () => {
+		try {
+			if (type() === "Windows_NT") await open(verification_uri, {
+				wait: true,
+				app: { name: apps.browser }
+			});
+			else await open(verification_uri, { wait: true });
+		} catch (error) {
+			command.error("Error opening browser:" + error.message);
+			command.info("Please manually open the following URL in your browser:");
+			command.info(verification_uri);
+			await wait(3e3);
+		}
+	});
+	const currentInterval = interval;
+	let remainingAttempts = 150;
+	spinner = command.spinner("Waiting for authorization...").start();
+	while (true) {
+		remainingAttempts -= 1;
+		if (remainingAttempts < 0) throw new Error("User took too long to respond");
+		try {
+			const { authentication } = await exchangeDeviceCode({
+				clientType: "oauth-app",
+				clientId: config.CLIENT_ID,
+				code: device_code,
+				scopes: config.SCOPES
+			});
+			const { data: user } = await new Octokit({ auth: authentication.token }).request("/user");
+			if (typeof spinner !== "undefined") spinner.succeed("Authorization successful");
+			return {
+				authentication,
+				user
+			};
+		} catch (error) {
+			if (error.status === 400) {
+				const errorCode = error.response.data.error;
+				if (["authorization_pending", "slow_down"].includes(errorCode)) await wait(currentInterval * 3e3);
+				else if ([
+					"expired_token",
+					"incorrect_device_code",
+					"access_denied"
+				].includes(errorCode)) throw new Error(errorCode);
+				else throw new Error(`An unexpected error occurred: ${error.message}`);
+			} else throw new Error(`An unexpected error occurred: ${error.message}`);
+		}
 	}
 }
 /**
-* Verify MFA
-* 
-* @param totp 
-* @param token 
-* @returns 
-*/
-function verifyMfa(totp, token) {
-	return new Promise((resolve, reject) => {
-		axios_default.post("/verify-mfa", { totp }, { headers: {
-			Authorization: `Bearer ${token}`,
-			"jwt-auth": true
-		} }).then((response) => {
-			resolve(response.data);
-		}).catch(({ response }) => {
-			reject(response.data.message || "Unable to verify MFA, please try again in a few minutes");
-		});
-	});
-}
-/**
 * Store login details
-* 
-* @param payload 
+*
+* @param payload
 */
-function storeLoginDetails(payload) {
-	write("token", payload.data.token);
-	write("token_expiry", payload.data.expiry);
-	write("user", payload.data.user);
+function storeLoginDetails({ authentication: payload, user }) {
+	write("user", user);
+	write("token", payload.token);
+	write("scopes", payload.scopes);
+	write("clientId", payload.clientId);
+	write("clientType", payload.clientType);
 }
 /**
 * Clear authentication details
 */
 function clearAuth() {
 	remove("token");
-	remove("token_expiry");
-	remove("user");
+	remove("scopes");
+	remove("clientId");
+	remove("clientType");
 }
 
 //#endregion
 //#region src/Commands/LoginCommand.ts
 var LoginCommand = class extends Command {
 	signature = "login";
-	description = "Log in to paystack cli";
+	description = "Log in to Grithub";
 	async handle() {
 		const [_, setCommand] = useCommand();
 		setCommand(this);
-		let token, user;
-		if (parseInt(read("token_expiry")) * 1e3 > parseFloat(Date.now().toString())) {
-			token = read("token");
-			user = read("user");
-			this.info("You're already logged in");
+		let token = read("token"), user;
+		if (token) {
+			this.info("INFO: You're already logged in").newLine();
 			return;
 		} else {
-			const remembered = read("remember_login");
-			const email = await this.ask("Email address", remembered ? remembered.email : void 0);
-			const password = await this.secret("Password", "*");
-			if (await this.confirm("Remember Email Address?", true)) write("remember_login", { email });
-			else remove("remember_login");
-			const [_$1, response] = await promiseWrapper(signIn(email, password));
-			if (response && response.data) {
+			const [_$1, response] = await promiseWrapper(signIn());
+			if (response) {
 				storeLoginDetails(response);
-				token = response.data.token;
-				user = response.data.user;
+				token = read("token");
+				user = read("user");
 			}
 		}
 		if (token && user) {
-			const [err, integration] = await promiseWrapper(selectIntegration(user.integrations, token));
-			if (err || !integration) this.error("ERROR: " + (err ?? "Integration selection failed")).newLine();
-			else {
-				write("selected_integration", integration);
-				const user_role = read("selected_integration").logged_in_user_role;
-				const [err$1, integrationData] = await promiseWrapper(getIntegration(integration.id, token));
-				if (err$1 || !integrationData) return void this.error("ERROR: " + (err$1 ?? "Failed to fetch integration data")).newLine();
-				integrationData.logged_in_user_role = user_role;
-				write("selected_integration", integrationData);
-				Logger.log([
-					["Logged in as", "white"],
-					[user.email, "cyan"],
-					["-", "white"],
-					[integration.business_name, "green"],
-					["(" + integration.id + ")", "white"]
-				], " ");
-				this.newLine();
-			}
+			const repos = await useOctokit().rest.repos.listForAuthenticatedUser();
+			const repoName = await this.choice("Select default repository", repos.data.map((r) => ({
+				name: r.full_name,
+				value: r.full_name
+			})), 0);
+			const repo = repos.data.find((r) => r.full_name === repoName);
+			if (repo) write("default_repo", {
+				id: repo.id,
+				name: repo.name,
+				full_name: repo.full_name,
+				private: repo.private
+			});
+			else write("default_repo", {});
+			this.info(`INFO: You have been logged in as ${Logger.log(user.name, "blue", !1)}!`).newLine();
 		}
+		process.exit(0);
 	}
 };
 
@@ -3149,106 +1760,162 @@ var LoginCommand = class extends Command {
 //#region src/Commands/LogoutCommand.ts
 var LogoutCommand = class extends Command {
 	signature = "logout";
-	description = "Log out of paystack cli";
+	description = "Log out of Grithub CLI";
 	async handle() {
 		const [_, setCommand] = useCommand();
 		setCommand(this);
-		this.newLine();
-		const spinner = ora("Logging out...").start();
+		const spinner = this.spinner("Logging out...").start();
 		try {
 			await wait(1e3, () => clearAuth());
 			spinner.succeed("Logged out successfully");
 		} catch (error) {
 			spinner.fail("Logout failed");
-			console.error("An error occurred during logout:", error);
+			this.error("An error occurred during logout: " + error.message);
 		}
 		this.newLine();
 	}
 };
 
 //#endregion
-//#region src/Commands/WebhookCommand.ts
-var WebhookCommand = class extends Command {
-	signature = `webhook
-    {command=listen : The command to run to listen for webhooks locally : [listen, ping]}
-    {local_route? : Specify the local route to listen on for webhooks (only for listen command)}
-    {--D|domain=test : Specify the domain to ping the webhook : [test, live]}
-    {--F|forward? : Specify a URL to forward the webhook to instead of the saved webhook URL}
-    {--E|event? : Specify the event type to simulate : [charge.success,transfer.success,transfer.failed,subscription.create]}
-`;
-	description = "Listen for webhook events locally, runs a webhook endpoint health check and listens for incoming webhooks, and ping your webhook URL from the CLI.";
+//#region src/Commands/SetRepoCommand.ts
+var SetRepoCommand = class extends Command {
+	signature = `set-repo 
+        { name? : The full name of the repository (e.g., username/repo)}
+        {--O|org : Set repository from an organization}
+    `;
+	description = "Set the default repository.";
 	async handle() {
 		const [_, setCommand] = useCommand();
-		const [getConfig] = useConfig();
 		setCommand(this);
-		this.newLine();
-		const config = getConfig();
-		let event = this.option("event");
-		let local_route = this.argument("local_route");
-		const selected_integration = read("selected_integration")?.id;
-		const user = read("user")?.id;
-		if (!selected_integration || !user) return void this.error("ERROR: You're not signed in, please run the `login` command before you begin");
-		if (this.argument("command") == "listen" && !local_route) local_route = await this.ask("Enter the local route to listen on for webhooks: ", "http://localhost:8080/webhook");
-		else if (this.argument("command") == "ping" && !event) event = await this.choice("Select event to simulate", [
-			{
-				name: "Charge Success",
-				value: "charge.success"
-			},
-			{
-				name: "Transfer Success",
-				value: "transfer.success"
-			},
-			{
-				name: "Transfer Failed",
-				value: "transfer.failed"
-			},
-			{
-				name: "Subscription Create",
-				value: "subscription.create"
-			}
-		], 0);
-		const domain = this.option("domain", "test");
-		const forward = this.option("forward") || null;
-		if (this.argument("command") == "listen") {
-			const token = read("token");
-			if (parseInt(read("token_expiry")) * 1e3 < parseFloat(Date.now().toString())) {
-				this.error("ERROR: Your session has expired. Please run the `login` command to sign in again.");
-				return;
-			}
-			const url = parseURL(local_route);
-			if (!url.port) url.port = "8000";
-			if (!url.search || url.search == "?") url.search = "";
-			try {
-				await ngrok.kill();
-			} catch {
-				this.debug("No existing ngrok process found to kill.");
-			}
-			const ngrokURL = (await ngrok.forward({
-				addr: url.port,
-				authtoken: config.ngrokAuthToken || process.env.NGROK_AUTH_TOKEN,
-				domain: process.env.NGROK_DOMAIN
-			})).url();
-			const domain$1 = this.option("domain", "test");
-			const spinner = ora("Tunelling webhook events to " + logger(local_route)).start();
-			const [err, result] = await promiseWrapper(setWebhook(ngrokURL, token, read("selected_integration").id));
-			if (err || !result) return void this.error("ERROR: " + (err ?? "Failed to set webhook URL")).newLine();
-			spinner.succeed("Listening for incoming webhook events at " + logger(local_route));
-			this.newLine().success(`INFO: Press ${logger("Ctrl+C", ["grey", "italic"])} to stop listening for webhook events.`).success(`INFO: Webhook URL set to ${logger(ngrokURL)} for ${domain$1} domain`).newLine();
-			process.stdin.resume();
-		} else if (this.argument("command") == "ping") {
-			await promiseWrapper(refreshIntegration());
-			const [e, response] = await promiseWrapper(pingWebhook({
-				...this.options(),
-				domain,
-				forward
-			}, event));
-			if (e || !response) return void this.error("ERROR: " + (e ?? "Failed to ping webhook URL.")).newLine();
-			this.newLine().info(response.code + " - " + response.text).newLine();
-			if (isJson(response.data)) dataRenderer(response.data);
-			else dataRenderer({ body: response.data });
-		} else this.error("ERROR: Invalid command. Please use either \"listen\" or \"ping\".").newLine();
+		const token = read("token");
+		let repo = void 0;
+		if (!token) return void this.error("ERROR: You must be logged in to set a default repository.");
+		if (this.argument("name")) ({data: repo} = await useOctokit().rest.repos.get({
+			owner: this.argument("name").split("/")[0],
+			repo: this.argument("name").split("/")[1]
+		}));
+		else if (this.option("org")) {
+			const spinner = this.spinner("Fetching your organizations...").start();
+			const orgs = await useOctokit().rest.orgs.listForAuthenticatedUser();
+			spinner.succeed(`${orgs.data.length} organizations fetched successfully.`);
+			const orgName = await this.choice("Select organization", orgs.data.map((o) => ({
+				name: o.login,
+				value: o.login
+			})), 0);
+			const orgReposSpinner = this.spinner(`Fetching repositories for organization ${orgName}...`).start();
+			const repos = await useOctokit().rest.repos.listForOrg({ org: orgName });
+			orgReposSpinner.succeed(`${repos.data.length} repositories fetched successfully.`);
+			const repoName = await this.choice(`Select default repository (${read("default_repo")?.full_name ?? "none"})`, repos.data.map((r) => ({
+				name: r.full_name,
+				value: r.full_name
+			})), 0);
+			repo = repos.data.find((r) => r.full_name === repoName);
+		} else {
+			const spinner = this.spinner("Fetching your repositories...").start();
+			const repos = await useOctokit().rest.repos.listForAuthenticatedUser();
+			spinner.succeed(`${repos.data.length} repositories fetched successfully.`);
+			const repoName = await this.choice(`Select default repository (${read("default_repo")?.full_name ?? "none"})`, repos.data.map((r) => ({
+				name: r.full_name,
+				value: r.full_name
+			})), 0);
+			repo = repos.data.find((r) => r.full_name === repoName);
+		}
+		if (repo) {
+			write("default_repo", {
+				id: repo.id,
+				name: repo.name,
+				full_name: repo.full_name,
+				private: repo.private
+			});
+			this.info(`INFO: ${Logger.log(repo.full_name, "blue", !1)} has been set as the default repository.`).newLine();
+		} else {
+			write("default_repo", read("default_repo") ?? {});
+			this.warn("INFO: No repository selected. Default repository has been cleared.").newLine();
+		}
 	}
 };
+
+//#endregion
+//#region src/axios.ts
+const api = axios.create({
+	baseURL: "https://api.github.com",
+	headers: { "Content-Type": "application/json" }
+});
+/**
+* Initialize Axios with configuration from the application settings.
+*/
+const initAxios = () => {
+	const [getConfig] = useConfig();
+	const config$1 = getConfig();
+	api.defaults.baseURL = config$1.apiBaseURL || "https://api.github.com";
+	api.defaults.timeout = config$1.timeoutDuration || 3e3;
+};
+/**
+* Log the full request details if we are not in production
+* @param config 
+* @returns 
+*/
+const logInterceptor = (config$1) => {
+	const [getConfig] = useConfig();
+	const [command] = useCommand();
+	const conf = getConfig();
+	const v = command().getVerbosity();
+	if (conf.debug || v > 1) {
+		if (conf.debug || v >= 2) {
+			console.log("Request URL:", config$1.url);
+			console.log("Request Method:", config$1.method);
+		}
+		if (conf.debug || v == 3) {
+			console.log("Request Headers:", config$1.headers);
+			console.log("Request Data:", config$1.data);
+		}
+		console.log("Error Response URL:", axios.getUri(config$1));
+	}
+	return config$1;
+};
+/**
+* Log only the relevant parts of the response if we are in not in production
+* 
+* @param response 
+* @returns 
+*/
+const logResponseInterceptor = (response) => {
+	const [getConfig] = useConfig();
+	const [command] = useCommand();
+	const conf = getConfig();
+	const v = command().getVerbosity();
+	if (conf.debug || v > 1) {
+		const { data, status, statusText, headers } = response;
+		if (conf.debug || v >= 2) {
+			console.log("Response Data:", data);
+			console.log("Response Status:", status);
+		}
+		if (conf.debug || v === 3) {
+			console.log("Response Status Text:", statusText);
+			console.log("Response Headers:", headers);
+		}
+		console.log("Error Response URL:", axios.getUri(response.config));
+	}
+	return response;
+};
+const logResponseErrorInterceptor = (error) => {
+	const [getConfig] = useConfig();
+	const [command] = useCommand();
+	const conf = getConfig();
+	const v = command().getVerbosity();
+	if (conf.debug || v > 1) if (error.response) {
+		const { data, status, headers } = error.response;
+		if (conf.debug || v >= 2) {
+			console.log("Error Response Data:", data);
+			console.log("Error Response Status:", status);
+		}
+		if (conf.debug || v === 3) console.log("Error Response Headers:", headers);
+		console.log("Error Response URL:", axios.getUri(error.config));
+	} else console.log("Error Message:", error.message);
+	return Promise.reject(error);
+};
+api.interceptors.request.use(logInterceptor, (error) => Promise.reject(error));
+api.interceptors.response.use(logResponseInterceptor, logResponseErrorInterceptor);
 
 //#endregion
 //#region src/logo.ts
@@ -3267,15 +1934,21 @@ Kernel.init(new Application(), {
 	logo: logo_default,
 	exceptionHandler(exception) {
 		const [getConfig] = useConfig();
-		const config = getConfig();
-		console.error(config.debug ? exception : exception.message);
+		const config$1 = getConfig();
+		console.error(config$1.debug ? exception : exception.message);
 	},
 	baseCommands: [
+		InfoCommand,
 		InitCommand,
 		LoginCommand,
 		LogoutCommand,
 		ConfigCommand,
-		WebhookCommand,
+		IssuesCommand,
+		SetRepoCommand,
+		IssuesSeedCommand,
+		IssuesUpdateCommand,
+		IssuesDeleteCommand,
+		GenerateApisCommand,
 		...Commands_default()
 	]
 });

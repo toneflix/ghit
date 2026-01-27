@@ -12,6 +12,7 @@ import { useCommand } from 'src/hooks'
 export class IssuesSeedCommand extends Command {
     protected signature = `issues:seed
         {directory=issues : The directory containing issue files to seed from.}
+        {--r|repo? : The repository to seed issues into. If not provided, the default repository will be used.}
         {--dry-run : Simulate the deletion without actually deleting issues.}
     `
 
@@ -33,7 +34,7 @@ export class IssuesSeedCommand extends Command {
         const seeder = new IssuesSeeder()
 
         try {
-            const usernameRepo = (repo.full_name.split('/') ?? ['', '']) as [string, string]
+            const usernameRepo = (this.option('repo', repo.full_name).split('/') ?? ['', '']) as [string, string]
             // Check network connectivity first
             await seeder.checkConnectivity()
 

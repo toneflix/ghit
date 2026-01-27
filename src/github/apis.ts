@@ -14,6 +14,15 @@ const APIs = {
                     type: 'String',
                     description: 'The title of the issue',
                     paramType: 'body',
+                    flag: true
+                },
+                {
+                    parameter: 'body',
+                    required: false,
+                    type: 'String',
+                    description: 'The contents of the issue',
+                    paramType: 'body',
+                    flag: true
                 },
                 {
                     parameter: 'owner',
@@ -29,6 +38,7 @@ const APIs = {
                     type: 'String',
                     description: 'The name of the repository',
                     paramType: 'path',
+                    arg: true
                 },
             ]
         },

@@ -1,20 +1,20 @@
 {
-    "name": "@toneflix/paystack-cli",
+    "name": "@toneflix/grithub",
     "type": "module",
-    "version": "0.1.6",
+    "version": "0.1.0",
     "description": "Manage Github in style, in bulk and with ease.",
     "main": "bin/cli.js",
     "private": false,
-    "homepage": "https://paystack.cli.toneflix.net",
+    "homepage": "https://grithub.toneflix.net",
     "repository": {
-        "url": "https://github.com/toneflix/paystack-cli",
+        "url": "https://github.com/toneflix/grithub.git",
         "type": "git"
     },
     "publishConfig": {
         "access": "public"
     },
     "bin": {
-        "paystack-cli": "bin/cli.js"
+        "grithub": "bin/cli.js"
     },
     "exports": {
         ".": "./bin/cli.js"
@@ -25,7 +25,7 @@
         "bin/cli.cjs"
     ],
     "keywords": [
-        "paystack",
+        "grithub",
         "cli",
         "command-line",
         "tool",
@@ -44,7 +44,7 @@
         "build": "tsdown",
         "dummy": "node ./tests/test.sever.js",
         "version": "pnpm run build",
-        "unlink": "pnpm uninstall --global @toneflix/paystack-cli",
+        "unlink": "pnpm uninstall --global @toneflix/grithub",
         "release": "pnpm build && pnpm changeset version && pnpm changeset publish",
         "publish-it": "pnpm build && pnpm publish --tag latest",
         "docs:dev": "vitepress dev docs",
@@ -61,6 +61,7 @@
         "@octokit/rest": "^22.0.1",
         "axios": "^1.13.2",
         "better-sqlite3": "^12.6.2",
+        "cli-table3": "^0.6.5",
         "dotenv": "^17.2.3",
         "fast-diff": "^1.3.0",
         "open": "^11.0.0",

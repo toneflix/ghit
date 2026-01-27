@@ -43,7 +43,7 @@ export const buildSignature = (param: XParam, cmd: string) => {
     let signature = ''
 
     // Determine if it's a flag or argument
-    const isFlag = !param.required || param.default !== undefined || param.type === 'Boolean' || param.options
+    const isFlag = !param.required || param.default !== undefined || param.type === 'Boolean' || param.options || param.flag === true
 
     if (isFlag && param.paramType !== 'path' && param.arg !== true) {
         signature += '{--'

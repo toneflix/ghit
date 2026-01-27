@@ -1,86 +1,94 @@
-# Development Guide
+# Development
 
-Set up and contribute to Paystack CLI development.
+Guide for contributing to Grithub development.
 
 ## Prerequisites
 
-- Node.js 18 or higher
-- pnpm package manager
-- Git
+### Required
 
-## Setup Development Environment
+- **Node.js** - v20.0.0 or higher
+- **pnpm** - v8.0.0 or higher (package manager)
+- **Git** - For version control
+- **GitHub Account** - For testing OAuth
 
-### 1. Clone the Repository
+### Optional
+
+- **TypeScript** - Knowledge helpful but not required
+- **SQLite** - Understanding of database concepts
+- **GitHub API** - Familiarity with REST APIs
+
+## Getting Started
+
+### Clone Repository
 
 ```bash
-git clone https://github.com/toneflix/paystack-cli.git
-cd paystack-cli
+git clone https://github.com/toneflix/grithub.git
+cd grithub
 ```
 
-### 2. Install Dependencies
+### Install Dependencies
 
 ```bash
 pnpm install
 ```
 
-### 3. Build the Project
+This installs:
+
+- Runtime dependencies
+- Development tools
+- Type definitions
+- Build tools
+
+### Project Structure
+
+```
+grithub/
+├── src/                    # Source code
+│   ├── Commands/          # Command implementations
+│   ├── Contracts/         # TypeScript interfaces
+│   ├── github/            # GitHub API utilities
+│   ├── utils/             # Helper functions
+│   ├── cli.ts            # CLI entry point
+│   ├── config.ts         # Configuration
+│   └── db.ts             # Database operations
+│
+├── tests/                 # Test files
+├── docs/                  # VitePress documentation
+├── bin/                   # Compiled executables
+├── build/                 # Build output
+│
+├── package.json           # Package configuration
+├── tsconfig.json         # TypeScript config
+├── tsdown.config.ts      # Build configuration
+└── vitest.config.ts      # Test configuration
+```
+
+### Run in Development
 
 ```bash
-pnpm run build
+pnpm runner <command>
 ```
 
-### 4. Link for Local Testing
+Examples:
 
 ```bash
-pnpm link --global
+pnpm runner login
+pnpm runner issues
+pnpm runner generate:apis
 ```
 
-Now you can run `paystack-cli` commands using your local development version.
+### Build
 
-## Project Structure
-
-```md
-paystack-cli/
-├── bin/ # Executable entry points
-│ ├── cli.cjs # CommonJS wrapper
-│ └── cli.js # Main CLI entry point
-├── src/ # TypeScript source code
-│ ├── cli.ts # CLI initialization
-│ ├── Commands/ # Command implementations
-│ ├── Contracts/ # TypeScript interfaces
-│ ├── paystack/ # API and webhook modules
-│ ├── db.ts # Database operations
-│ ├── env.d.ts # Environment types
-│ ├── helpers.ts # Utility functions
-│ ├── hooks.ts # Command hooks
-│ ├── logo.ts # ASCII logo
-│ └── Paystack.ts # Paystack API client
-├── docs/ # Documentation (VitePress)
-├── dist/ # Build output
-└── package.json # Package configuration
-```
-
-## Technology Stack
-
-- **CLI Framework**: H3ravel Musket - Command routing and handling
-- **Language**: TypeScript
-- **Build Tool**: tsdown
-- **Testing**: Vitest
-- **Database**: better-sqlite3 for local session storage
-- **HTTP Client**: Axios for API requests
-- **Environment**: dotenv for configuration
-
-## Development Commands
-
-### Build the Project
+Compile TypeScript to JavaScript:
 
 ```bash
-# Development build with watch mode
-pnpm run dev
-
-# Production build
-pnpm run build
+pnpm build
 ```
+
+Output:
+
+- `bin/cli.js` - ESM bundle
+- `bin/cli.cjs` - CommonJS bundle
 
 ### Run Tests
 
@@ -88,188 +96,343 @@ pnpm run build
 # Run all tests
 pnpm test
 
-# Watch mode
-pnpm test:watch
+# Run specific test
+pnpm vitest tests/helpers.spec.ts
 
-# Coverage report
-pnpm test:coverage
+# Watch mode
+pnpm vitest --watch
 ```
 
-### Code Quality
+### Lint Code
 
 ```bash
-# Type checking
-pnpm run typecheck
-
-# Linting
-pnpm run lint
-
-# Format code
-pnpm run format
+pnpm lint
 ```
 
-## Adding a New Command
+## Development Workflow
 
-### 1. Create Command Class
+### 1. Create Feature Branch
 
-Create a new file in `src/Commands/`:
+```bash
+git checkout -b feature/amazing-feature
+```
+
+### 2. Make Changes
+
+Edit files in `src/`:
 
 ```typescript
-// src/Commands/MyNewCommand.ts
-import { Command } from 'h3ravel-musket';
-import paystack from '../Paystack';
-import { output } from '../helpers';
+// src/Commands/MyCommand.ts
+import { Command } from '@h3ravel/musket';
 
-export default class MyNewCommand extends Command {
-  static signature = 'my:command {argument} {--option=}';
-  static description = 'Description of my new command';
+export class MyCommand extends Command {
+  protected signature = 'my-command';
+  protected description = 'Does something amazing';
 
   async handle() {
-    const argument = this.argument('argument');
-    const option = this.option('option');
-
-    try {
-      const response = await paystack.api.myEndpoint({
-        argument,
-        option,
-      });
-
-      output(response.data, this.json);
-    } catch (error) {
-      this.error('Error message');
-      throw error;
-    }
+    this.info('Hello from my command!');
   }
 }
 ```
 
-### 2. Register Command
-
-Add to `src/Commands/Commands.ts`:
-
-```typescript
-import MyNewCommand from './MyNewCommand';
-
-export const commands = [
-  // ... existing commands
-  MyNewCommand,
-];
-```
-
-### 3. Test Your Command
+### 3. Test Changes
 
 ```bash
-pnpm run build
-paystack-cli my:command test-arg --option=test-value
+# Test your command
+pnpm runner my-command
+
+# Run tests
+pnpm test
 ```
 
-## Working with the Paystack API
+### 4. Build
 
-### API Client Structure
+```bash
+pnpm build
+```
 
-The API client is in `src/Paystack.ts`:
+### 5. Commit
+
+```bash
+git add .
+git commit -m "feat: add amazing feature"
+```
+
+### 6. Push
+
+```bash
+git push origin feature/amazing-feature
+```
+
+### 7. Create Pull Request
+
+Open PR on GitHub with:
+
+- Clear description
+- Screenshots (if UI changes)
+- Test results
+- Breaking changes noted
+
+## Adding Commands
+
+### Create Command File
 
 ```typescript
-class Paystack {
-  constructor(secretKey: string) {
-    this.secretKey = secretKey;
-    this.api = new PaystackAPI(secretKey);
+// src/Commands/ExampleCommand.ts
+import { Command } from '@h3ravel/musket';
+import { useCommand } from '../hooks';
+
+export class ExampleCommand extends Command {
+  protected signature = `example 
+        { name : User name }
+        {--g|greeting= : Greeting message }
+    `;
+
+  protected description = 'Example command';
+
+  async handle() {
+    const [_, setCommand] = useCommand();
+    setCommand(this);
+
+    const name = this.argument('name');
+    const greeting = this.option('greeting', 'Hello');
+
+    this.info(`${greeting}, ${name}!`).newLine();
   }
 }
 ```
 
-### Adding New API Endpoints
-
-Edit `src/paystack/apis.ts`:
+### Register Command
 
 ```typescript
-export class PaystackAPI {
-  // Add new endpoint method
-  async myNewEndpoint(data: MyDataType) {
-    return this.request<MyResponseType>({
-      method: 'POST',
-      url: '/my-endpoint',
-      data,
-    });
-  }
+// src/cli.ts
+import { ExampleCommand } from './Commands/ExampleCommand';
 
-  private async request<T>(config: AxiosRequestConfig) {
-    // Request implementation
-  }
+Kernel.init(new Application(), {
+  baseCommands: [
+    // ... existing commands
+    ExampleCommand,
+  ],
+});
+```
+
+### Test Command
+
+```bash
+pnpm runner example John --greeting="Hi"
+# Output: Hi, John!
+```
+
+## Working with Database
+
+### Database Location
+
+```
+~/.grithub/app.db
+```
+
+### Database Operations
+
+```typescript
+import { read, write, init } from '../db';
+
+// Initialize database
+init();
+
+// Write data
+write('key', { value: 'data' });
+
+// Read data
+const data = read('key');
+
+// Read with type
+const config = read<IConfig>('config');
+```
+
+### Available Tables
+
+- `store` - Key-value storage
+  - `token` - Authentication token
+  - `user` - User profile
+  - `default_repo` - Default repository
+  - `config` - User preferences
+
+## Working with GitHub API
+
+### Using Octokit
+
+```typescript
+import { useOctokit } from '../hooks';
+
+const octokit = useOctokit();
+
+// List issues
+const issues = await octokit.rest.issues.listForRepo({
+  owner: 'toneflix',
+  repo: 'grithub',
+  state: 'open',
+});
+
+// Create issue
+await octokit.rest.issues.create({
+  owner: 'toneflix',
+  repo: 'grithub',
+  title: 'New issue',
+  body: 'Issue description',
+});
+```
+
+### Error Handling
+
+```typescript
+import { promiseWrapper } from '../helpers';
+
+const [err, result] = await promiseWrapper(
+  octokit.rest.issues.create({
+    owner: 'owner',
+    repo: 'repo',
+    title: 'Issue',
+  }),
+);
+
+if (err) {
+  this.error('Failed to create issue: ' + err.message);
+  return;
+}
+
+this.success('Issue created: #' + result.data.number);
+```
+
+## TypeScript Guidelines
+
+### Interfaces
+
+Define in `src/Contracts/`:
+
+```typescript
+// src/Contracts/Interfaces.ts
+export interface IIssue {
+  number: number;
+  title: string;
+  body: string | null;
+  state: 'open' | 'closed';
+  labels: ILabel[];
+  assignees: IUser[];
 }
 ```
 
-### Type Definitions
+### Type Safety
 
-Add interfaces in `src/Contracts/Interfaces.ts`:
+Use strict types:
 
 ```typescript
-export interface MyDataType {
-  field1: string;
-  field2?: number;
+// Good
+function getIssue(number: number): Promise<IIssue> {
+  // ...
 }
 
-export interface MyResponseType {
-  status: boolean;
-  message: string;
-  data: {
-    // response structure
-  };
+// Avoid
+function getIssue(number: any): any {
+  // ...
 }
 ```
 
-## Database Operations
-
-The CLI uses SQLite for session management in `src/db.ts`:
+### Generics
 
 ```typescript
-import Database from 'better-sqlite3';
+function processData<T>(data: T): T {
+  // Process and return same type
+  return data;
+}
 
-const db = new Database('paystack-cli.db');
-
-// Create table
-db.exec(`
-  CREATE TABLE IF NOT EXISTS my_table (
-    id INTEGER PRIMARY KEY,
-    data TEXT
-  )
-`);
-
-// Insert data
-const insert = db.prepare('INSERT INTO my_table (data) VALUES (?)');
-insert.run(JSON.stringify(data));
-
-// Query data
-const query = db.prepare('SELECT * FROM my_table WHERE id = ?');
-const result = query.get(id);
+const issue = processData<IIssue>(issueData);
 ```
 
 ## Testing
 
-### Unit Test Example
-
-Create test files in `src/__tests__/`:
+### Unit Tests
 
 ```typescript
+// tests/helpers.spec.ts
 import { describe, it, expect } from 'vitest';
-import MyNewCommand from '../Commands/MyNewCommand';
+import { myHelper } from '../src/helpers';
 
-describe('MyNewCommand', () => {
-  it('should process argument correctly', () => {
-    const command = new MyNewCommand();
-    // Test implementation
-    expect(command).toBeDefined();
+describe('myHelper', () => {
+  it('should do something', () => {
+    const result = myHelper('input');
+    expect(result).toBe('expected');
+  });
+
+  it('should handle errors', () => {
+    expect(() => myHelper(null)).toThrow();
   });
 });
 ```
 
-### Integration Testing
-
-Test with actual API (use test mode):
+### Run Specific Tests
 
 ```bash
-export PAYSTACK_SECRET_KEY="sk_test_xxxxx"
-pnpm test:integration
+# Single file
+pnpm vitest tests/helpers.spec.ts
+
+# Pattern
+pnpm vitest tests/**/*.spec.ts
+
+# With coverage
+pnpm vitest --coverage
+```
+
+## Documentation
+
+### VitePress
+
+Documentation lives in `docs/`:
+
+```bash
+# Start dev server
+pnpm docs:dev
+
+# Build docs
+pnpm docs:build
+
+# Preview build
+pnpm docs:preview
+```
+
+### Writing Docs
+
+Create markdown files:
+
+```markdown
+# My Feature
+
+Description of the feature.
+
+## Usage
+
+\`\`\`bash
+grithub my-command
+\`\`\`
+
+## Options
+
+- `--option` - Description
+```
+
+Update sidebar:
+
+```typescript
+// docs/.vitepress/config.ts
+sidebar: {
+    '/guide/': [
+        {
+            text: 'Features',
+            items: [
+                { text: 'My Feature', link: '/guide/my-feature' }
+            ]
+        }
+    ]
+}
 ```
 
 ## Debugging
@@ -277,119 +440,163 @@ pnpm test:integration
 ### Enable Debug Mode
 
 ```bash
-export DEBUG=paystack:*
-paystack-cli your-command
+# In development
+export GRITHUB_DEBUG=true
+pnpm runner <command>
 ```
 
-### Inspect Database
-
-```bash
-sqlite3 ~/.paystack-cli/paystack-cli.db
-.tables
-SELECT * FROM sessions;
-.quit
-```
-
-### Check Logs
-
-The CLI logs are stored in:
-
-- macOS/Linux: `~/.paystack-cli/logs/`
-- Windows: `%APPDATA%/.paystack-cli/logs/`
-
-## Building for Release
-
-### 1. Update Version
-
-```bash
-pnpm version patch  # or minor, major
-```
-
-### 2. Build
-
-```bash
-pnpm run build
-```
-
-### 3. Test Distribution
-
-```bash
-pnpm pack
-npm install -g paystack-cli-*.tgz
-```
-
-### 4. Publish
-
-```bash
-pnpm publish
-```
-
-## Code Style Guidelines
-
-### TypeScript
-
-- Use strict mode
-- Define explicit types for public APIs
-- Use interfaces over type aliases for objects
-- Prefer const over let
-
-### Naming Conventions
-
-- Commands: PascalCase (e.g., `TransactionInitCommand`)
-- Files: PascalCase for classes, camelCase for utilities
-- Variables: camelCase
-- Constants: UPPER_SNAKE_CASE
-
-### Error Handling
-
-Always use try-catch blocks for API calls:
+### Use Debugger
 
 ```typescript
-try {
-  const response = await paystack.api.someEndpoint(data);
-  output(response.data, this.json);
-} catch (error) {
-  this.error('Descriptive error message');
-  throw error;
+// Add breakpoint
+debugger;
+
+// Or
+console.log('Debug info:', variable);
+```
+
+### VS Code
+
+Create `.vscode/launch.json`:
+
+```json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug CLI",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["runner", "issues"],
+      "console": "integratedTerminal"
+    }
+  ]
 }
 ```
 
-### Documentation
+## Best Practices
 
-- Add JSDoc comments for public methods
-- Update README.md for new features
-- Include examples in documentation
+### Code Style
 
-## Environment Variables
+- Use TypeScript strict mode
+- Follow existing patterns
+- Add JSDoc comments for public APIs
+- Keep functions small and focused
 
-For development, create `.env` file:
+### Error Handling
 
-```sh
-PAYSTACK_SECRET_KEY=sk_test_xxxxx
-PAYSTACK_PUBLIC_KEY=pk_test_xxxxx
-DEBUG=paystack:*
-NODE_ENV=development
+```typescript
+// Use promiseWrapper
+const [err, result] = await promiseWrapper(asyncOperation());
+
+if (err) {
+  this.error('Operation failed: ' + err.message);
+  return;
+}
 ```
 
-## CI/CD
+### User Feedback
 
-The project uses GitHub Actions for:
+```typescript
+// Use spinners for long operations
+const spinner = this.spinner('Processing...').start();
 
-- Running tests on pull requests
-- Building and publishing releases
-- Running linters and type checks
+try {
+  await longOperation();
+  spinner.succeed('Success!');
+} catch (error) {
+  spinner.fail('Failed!');
+}
+```
 
-Configuration is in `.github/workflows/`.
+### Configuration
 
-## Need Help?
+```typescript
+// Read config safely
+const [getConfig] = useConfig();
+const config = getConfig();
 
-- Check [Troubleshooting](/guide/troubleshooting)
-- Review [Contributing Guidelines](/guide/contributing)
-- Join discussions on GitHub
-- Review existing issues and PRs
+if (!config) {
+  // Handle missing config
+}
+```
+
+## Common Tasks
+
+### Update Dependencies
+
+```bash
+# Update all
+pnpm update
+
+# Update specific
+pnpm update @octokit/rest
+
+# Check outdated
+pnpm outdated
+```
+
+### Add Dependency
+
+```bash
+# Production
+pnpm add package-name
+
+# Development
+pnpm add -D package-name
+```
+
+### Release Process
+
+```bash
+# Version bump
+pnpm version patch  # or minor, major
+
+# Build
+pnpm build
+
+# Publish
+pnpm publish
+```
+
+## Troubleshooting
+
+### Build Fails
+
+```bash
+# Clean and rebuild
+rm -rf build/ bin/
+pnpm install
+pnpm build
+```
+
+### Tests Fail
+
+```bash
+# Clear test cache
+pnpm vitest --clearCache
+
+# Run single test
+pnpm vitest tests/specific.spec.ts
+```
+
+### Type Errors
+
+```bash
+# Check types without building
+pnpm tsc --noEmit
+```
+
+## Resources
+
+- [TypeScript Docs](https://www.typescriptlang.org/docs/)
+- [Octokit REST.js](https://octokit.github.io/rest.js/)
+- [H3ravel Musket](https://github.com/h3ravel/musket)
+- [GitHub API Docs](https://docs.github.com/en/rest)
 
 ## Next Steps
 
-- Read [Contributing Guidelines](/guide/contributing)
-- Check [API Reference](/api/transactions)
-- Explore [Examples](/guide/examples)
+- [Contributing](/guide/contributing) - Contribution guidelines
+- [Commands](/guide/commands) - Command structure
+- [API Reference](/api/issues) - API documentation

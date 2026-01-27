@@ -1,31 +1,15 @@
-import fs from 'node:fs'
+import { GeneratedParam, GeneratedTree } from '../Contracts/Grithub'
+import { mkdirSync, writeFileSync } from 'node:fs'
+import path, { dirname } from 'node:path'
+import { useCommand, useConfig } from '../hooks'
+
+import { IConfig } from '../Contracts/Interfaces'
+import { fileURLToPath } from 'node:url'
 import { installPackage } from '@antfu/install-pkg'
-import path from 'node:path'
-import { useCommand } from 'src/hooks'
-
-// Simple runtime shape for the generated API tree
-export type GeneratedParam = {
-    parameter: string
-    required: boolean
-    type: string
-    description?: string
-    paramType: 'path' | 'query' | 'body' | 'header'
-}
-
-export type GeneratedSchema = {
-    api: string
-    endpoint: string
-    description?: string
-    alias?: string | null
-    params: GeneratedParam[]
-}
-
-export type GeneratedTree = {
-    [namespace: string]: GeneratedSchema[]
-}
 
 export class ApisGenerator {
     spec: Record<string, any>
+    config: IConfig
 
     openapi: {
         [key: string]: any,
@@ -34,26 +18,20 @@ export class ApisGenerator {
         }
     }
 
+    private skipApis = new Set<string>([
+        'issues:list', 'issues:update', 'issues:seed', 'issues:delete'
+    ])
+    private skipParams = new Set<string>(['s'])
     private PARAM_LOCATIONS = new Set(['path', 'query', 'header'])
-
-    private skipParams = new Set([
-        'default_for_new_repos', 'configuration_id', 'scope'
-    ])
-
-    private skipApis = new Set([
-        'createConfiguration', 'getConfigurationsForOrg',
-        'getRepositoriesForEnterpriseConfiguration',
-        'updateEnterpriseConfiguration', 'createConfigurationForEnterprise',
-        'getConfigurationForEnterprise', 'deleteConfiguration',
-        'getAllConfigurations', 'getConfigurationForRepo',
-    ])
 
     constructor(
         openapi: Record<string, any>,
         schema: string = 'api.github.com.deref'
     ) {
+        const [getConfig] = useConfig()
         this.openapi = openapi as any
         this.spec = this.openapi.schemas[schema]
+        this.config = getConfig()
 
         if (!this.spec || !this.spec.paths) {
             throw new Error(`Could not find ${schema} schema`)
@@ -65,9 +43,14 @@ export class ApisGenerator {
             .spinner('Installing @octokit/openapi...')
             .start()
 
+        const __filename = fileURLToPath(import.meta.url)
+        const __dirname = dirname(__filename)
+        const dirPath = path.normalize(path.join(__dirname, '../..'))
+
         await installPackage('@octokit/openapi', {
-            cwd: process.cwd(),
+            cwd: dirPath,
             silent: true,
+            dev: true,
         })
 
         spinner.succeed('@octokit/openapi installed successfully.')
@@ -78,13 +61,15 @@ export class ApisGenerator {
     skipParam (name: string): boolean {
         return this.skipParams.has(name) ||
             name.length > 20 ||
-            name.length < 2
+            name.length <= 2
     }
 
-    skipApi (api: string): boolean {
-        return this.skipApis.has(api) ||
-            api.length > 20 ||
-            api.length < 2
+    skipApi (api: string, namespace?: string): boolean {
+        const cmd = (namespace ? namespace + ':' : '') + api.toCamelCase()
+
+        return this.skipApis.has(cmd) ||
+            this.skipApis.has(api.toCamelCase()) ||
+            cmd.length > (this.config.skipLongCommandGeneration ? 23 : Infinity)
     }
 
     normalizeType (schema: any): string {
@@ -168,7 +153,7 @@ export class ApisGenerator {
                 if (!opId) continue
 
                 const [namespace, name] = opId.split('/')
-                if (!namespace || !name || this.skipApi(name.toCamelCase())) continue
+                if (!namespace || !name || this.skipApi(name, namespace)) continue
 
                 const params = this.gatherParams(op)
 
@@ -207,26 +192,25 @@ export class ApisGenerator {
         const generator = new ApisGenerator(octokitOpenapi, 'api.github.com.deref')
         const tree = generator.buildTree()
 
-        const target = path.join(process.cwd(), 'github/apis.generated.ts')
+        const target = path.join(process.cwd(), '.grithub/apis.generated.js')
         const header = '// Auto-generated from @octokit/openapi. Do not edit directly.\n\n'
 
-        /**
-         * Remove all double quotes from object keys, and convert 
-         * double quotes from object values to single quotes for cleaner output
-         * At the same time, pay attention to not affect the quotes inside the strings.
-         */
         const stringObject = JSON
             .stringify(tree, null, 2)
             // Remove quotes from identifier-like keys only
             .replace(/"([A-Za-z_][\w$]*)":/g, '$1:')
-            // Convert surrounding double quotes on values to single quotes, preserve inner escapes, and escape single quotes
-            .replace(/:\s*"((?:[^"\\]|\\.)*)"/g, (_, p1) => `: '${p1.replace(/'/g, '\\\'')}'`)
+            // Convert surrounding double quotes on values to single quotes, unescape \" (safe inside single quotes), and escape single quotes
+            .replace(
+                /:\s*"((?:[^"\\]|\\.)*)"/g,
+                (_, p1) => `: '${p1.replace(/\\"/g, '"').replace(/'/g, '\\\'')}'`
+            )
 
-        const contents = `${header}import { XAPITree } from '@toneflix/grithub'\n\nexport const APIs = ${stringObject} as const satisfies XAPITree\n\nexport default APIs\n`
+        const contents =
+            `${header}export const APIs = ${stringObject}\n\nexport default APIs\n`
 
-        fs.mkdirSync(path.dirname(target), { recursive: true })
-        fs.writeFileSync(target, contents, 'utf8')
+        mkdirSync(path.dirname(target), { recursive: true })
+        writeFileSync(target, contents, 'utf8')
 
-        spinner.succeed('Generated Extended APIs to: ' + 'target')
+        spinner.succeed('Generated Extended APIs to: ' + target)
     }
 }

@@ -1,123 +1,149 @@
 # Quick Start
 
-This guide will get you started with Paystack CLI in under 5 minutes.
+Get up and running with Grithub in under 5 minutes.
 
-## Installation & Setup
+## Install
 
-```bash
-# Install globally
-npm install -g @toneflix/paystack-cli
+::: code-group
 
-# Initialize the CLI
-paystack-cli init
-
-# Login to your Paystack account
-paystack-cli login
+```bash [pnpm]
+pnpm add -g @toneflix/grithub
 ```
 
-## Common Commands
-
-### Transactions
-
-```bash
-# Initialize a transaction
-paystack-cli transaction:initialize \
-  --email=customer@email.com \
-  --amount=10000
-
-# List all transactions
-paystack-cli transaction:list --perPage=50 --page=1
-
-# Verify a transaction
-paystack-cli transaction:verify --reference=xyz123
-
-# View transaction details
-paystack-cli transaction:view --id=123456
+```bash [npm]
+npm install -g @toneflix/grithub
 ```
 
-### Customers
-
-```bash
-# Create a customer
-paystack-cli customer:create \
-  --email=user@example.com \
-  --first_name=John \
-  --last_name=Doe
-
-# Fetch customer details
-paystack-cli customer:fetch --code=CUS_xxxxx
-
-# List all customers
-paystack-cli customer:list --perPage=20
+```bash [yarn]
+yarn global add @toneflix/grithub
 ```
 
-### Plans & Subscriptions
+:::
+
+## Authenticate
 
 ```bash
-# Create a plan
-paystack-cli plan:create \
-  --name="Monthly Plan" \
-  --amount=5000 \
-  --interval=monthly
-
-# Create a subscription
-paystack-cli subscription:create \
-  --customer=CUS_xxx \
-  --plan=PLN_xxx
+grithub login
 ```
 
-### Transfers
+Follow the browser OAuth flow to grant access.
+
+## Set Default Repository
 
 ```bash
-# Create a transfer recipient
-paystack-cli transferrecipient:create \
-  --type=nuban \
-  --name="John Doe" \
-  --account_number=0123456789 \
-  --bank_code=033
-
-# Initiate a transfer
-paystack-cli transfer:initiate \
-  --source=balance \
-  --amount=10000 \
-  --recipient=RCP_xxx
+grithub set-repo owner/repo
 ```
 
-## Webhook Testing
+## Common Workflows
+
+### Browse Issues Interactively
 
 ```bash
-# Start listening for webhooks
-paystack-cli webhook listen http://localhost:3000/webhook
-
-# In another terminal, ping your webhook
-paystack-cli webhook ping --event=charge.success
+grithub issues
 ```
 
-## Configuration
+Navigate through issues, view details, close/reopen, edit, or delete.
+
+### Create a Single Issue
 
 ```bash
-# Configure CLI settings
-paystack-cli config
+grithub issues:create --title "Bug found" --body "Description"
 ```
 
-You can configure:
+### Seed Multiple Issues
 
-- API Base URL
-- Timeout Duration
-- Debug Mode
-- Ngrok Auth Token
+Create a directory with markdown files (one per issue):
 
-## Getting Help
+```
+issues/
+├── 001-setup-ci.md
+├── 002-add-tests.md
+└── 003-update-docs.md
+```
 
-For any command, use the `--help` flag:
+Each file:
+
+```markdown
+---
+type: Issue Type (Feature, Task, Bug)
+title: Setup CI Pipeline
+labels: ['enhancement', 'ci']
+assignees: ['username']
+---
+
+Add GitHub Actions workflow for automated testing.
+```
+
+Then seed:
 
 ```bash
-paystack-cli transaction:initialize --help
+grithub issues:seed ./issues
+```
+
+### Update Issues in Bulk
+
+Modify your markdown files, then:
+
+```bash
+grithub issues:update ./issues
+```
+
+Grithub uses smart diffing to update only changed content.
+
+### Delete Issues
+
+Interactively multiselcet and delte issues
+
+```bash
+grithub issues:delete
+```
+
+## Generated Commands
+
+Generate CLI commands from GitHub's OpenAPI spec:
+
+```bash
+grithub generate:apis
+```
+
+Now use any GitHub REST endpoint:
+
+```bash
+# List repos for authenticated user
+grithub repos:list-for-authenticated-user --per_page 100
+
+# Create a gist
+grithub gists:create --description "My snippet" --public true
+
+# Get user info
+grithub users:get-authenticated
+```
+
+::: tip Command Discovery
+Run `grithub --help` to see all available commands, including generated ones and their expected options and arguments.
+:::
+
+## Configuration Tips
+
+### Check Current Config
+
+```bash
+grithub info
+```
+
+### Enable Debug Mode
+
+```bash
+grithub config --debug true
+```
+
+### Switch Repositories Quickly
+
+```bash
+grithub set-repo different-owner/different-repo
 ```
 
 ## Next Steps
 
-- [Authentication Guide](/guide/authentication) - Learn about session management
-- [API Reference](/api/transactions) - Explore all available commands
-- [Webhook Testing](/guide/webhook-testing) - Set up local webhook testing
-- [Examples](/guide/examples) - See real-world usage examples
+- [Getting Started Guide](/guide/getting-started) for detailed setup
+- [Commands Reference](/guide/commands) for all command options

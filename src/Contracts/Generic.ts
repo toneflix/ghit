@@ -35,6 +35,7 @@ export interface XParam<
      * Setting this will make the parameter a command argument instead of a flag
      */
     arg?: boolean
+    flag?: boolean
     parameter: ExtractParameters<T, M>
     required: boolean
     type: 'String' | 'Number' | 'Boolean' | 'Array' | 'Object',
