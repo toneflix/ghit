@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { isJson, parseURL, promiseWrapper, wait } from '../src/helpers'
+import { isJson, logger, parseURL, promiseWrapper, viewIssue, wait } from '../src/helpers'
+import { vi } from 'vitest'
+import { Logger } from '@h3ravel/shared'
 
 describe('Helpers Test', () => {
     it('parseURL should correctly parse URLs', () => {
@@ -47,5 +49,45 @@ describe('Helpers Test', () => {
         const [err2, result2] = await promiseWrapper(rejectedPromise)
         expect(err2).toBe('failure')
         expect(result2).toBeNull()
+    })
+
+    it('should log issue details when viewIssue is called', () => {
+        using spy = vi.spyOn(Logger, 'log').mockImplementation(() => { })
+
+        viewIssue({
+            title: 'Sample Issue',
+            type: 'Feature',
+            body: 'This is a sample issue body.',
+            number: 42,
+            state: 'open',
+            labels: [{ name: 'bug' }, { name: 'help wanted' }],
+            assignees: [{ login: 'octocat' }],
+            created_at: '2024-01-01T00:00:00Z',
+            updated_at: '2024-01-02T00:00:00Z',
+        } as never)
+
+        expect(spy).toHaveBeenCalled()
+        expect(spy.mock.calls[0][0]?.[1]).toEqual(['Sample Issue', ['blue']])
+        expect(spy.mock.calls[0][0]?.[3]).toEqual(['Feature', ['blue']])
+        expect(spy.mock.calls[0][0]?.[5]).toEqual(['42', ['blue']])
+        expect(spy.mock.calls[0][0]?.[7]).toEqual(['open', ['blue']])
+        expect(spy.mock.calls[0][0]?.[9]).toEqual(['bug, help wanted', ['blue']])
+        expect(spy.mock.calls[0][0]?.[11]).toEqual(['octocat', ['blue']])
+        expect(spy.mock.calls[0][0]?.[13]).toEqual(['1/1/2024, 1:00:00 AM', ['blue']])
+        expect(spy.mock.calls[0][0]?.[15]).toEqual(['1/2/2024, 1:00:00 AM', ['blue']])
+
+        spy.mockRestore()
+    })
+
+    it('should log messages with specified styles when logger is called', () => {
+        const spy = vi.spyOn(Logger, 'log').mockImplementation(() => { })
+
+        logger('Test message', ['red', 'bold'], true)
+        expect(spy).toHaveBeenCalledWith('Test message', ['red', 'bold'], true)
+
+        logger('Another test message', ['green'], false)
+        expect(spy).toHaveBeenCalledWith('Another test message', ['green'], false)
+
+        spy.mockRestore()
     })
 })

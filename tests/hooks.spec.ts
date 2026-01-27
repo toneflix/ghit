@@ -1,9 +1,10 @@
 import { Command, Kernel } from '@h3ravel/musket'
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
-import { init, useDb } from '../src/db'
+import { existsSync, mkdirSync, rmSync, unlinkSync } from 'fs'
+import { init, useDb, useDbPath } from '../src/db'
 import { useCommand, useConfig, useShortcuts } from '../src/hooks'
 
-import Database from 'better-sqlite3'
+import { afterAll } from 'vitest'
 import path from 'path'
 
 class App {
@@ -13,9 +14,14 @@ class App {
 let app, program: any
 
 beforeAll(async () => {
+    const [__, setDbPath] = useDbPath()
     const [_, setDatabase] = useDb()
-    setDatabase(new Database('testdb.db'))
+
+    mkdirSync('./tests/temp-db', { recursive: true })
+    setDbPath('./tests/temp-db')
+    setDatabase('testdb.db')
     init()
+
     app = new App()
     program = await Kernel.init(
         app,
@@ -26,6 +32,15 @@ beforeAll(async () => {
             discoveryPaths: [path.join(process.cwd(), 'src/Commands/*.ts')]
         }
     )
+})
+
+afterAll(() => {
+    if (existsSync(path.join('tests/temp-db', 'testdb.db'))) {
+        unlinkSync(path.join('tests/temp-db', 'testdb.db'))
+        unlinkSync(path.join('tests/temp-db', 'testdb.db-shm'))
+        unlinkSync(path.join('tests/temp-db', 'testdb.db-wal'))
+        rmSync('./tests/temp-db', { recursive: true, force: true })
+    }
 })
 
 describe('Hooks Test', () => {
@@ -81,5 +96,45 @@ describe('Hooks Test', () => {
         const added3 = addShortcut('rm')
         expect(added3).toBe(true)
         expect(getShortcuts()).toEqual(['ls', 'rm'])
+    })
+
+    describe('useOctokit Hook', () => {
+        it('should initialize Octokit instance with default config', async () => {
+            const { Octokit } = await import('@octokit/rest')
+            const [getConfig] = useConfig()
+            const config = getConfig()
+
+            const octokitInstance = new Octokit({
+                baseUrl: config.apiBaseURL,
+                request: {
+                    timeout: config.timeoutDuration,
+                },
+            })
+
+            expect(octokitInstance).toBeInstanceOf(Octokit)
+            expect(octokitInstance.request.endpoint.DEFAULTS.baseUrl).toBe(config.apiBaseURL)
+        })
+
+        it('should initialize Octokit instance with custom config', async () => {
+            const { Octokit } = await import('@octokit/rest')
+            const [_, setConfig] = useConfig()
+
+            const customConfig = {
+                debug: false,
+                apiBaseURL: 'https://custom.api',
+                timeoutDuration: 10000
+            }
+            setConfig(customConfig)
+
+            const octokitInstance = new Octokit({
+                baseUrl: customConfig.apiBaseURL,
+                request: {
+                    timeout: customConfig.timeoutDuration,
+                },
+            })
+
+            expect(octokitInstance).toBeInstanceOf(Octokit)
+            expect(octokitInstance.request.endpoint.DEFAULTS.baseUrl).toBe(customConfig.apiBaseURL)
+        })
     })
 })

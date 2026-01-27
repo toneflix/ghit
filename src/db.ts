@@ -5,12 +5,14 @@ import { mkdirSync } from 'fs'
 import path from 'path'
 
 let db: Database.Database
-const dbPath = path.join(homedir(), '.grithub')
+let dbPath = path.join(homedir(), '.grithub')
 
 mkdirSync(dbPath, { recursive: true })
 
 
-export const useDbPath = () => [dbPath] as const
+export const useDbPath = () => [dbPath, (path: string) => {
+    dbPath = path
+}] as const
 
 /**
  * Hook to get or set the database instance.
@@ -20,8 +22,8 @@ export const useDbPath = () => [dbPath] as const
 export const useDb = () => {
     return [
         () => db,
-        (newDb: Database.Database) => {
-            db = newDb
+        (filename: string) => {
+            db = new Database(path.join(dbPath, filename))
 
             // Check current journal mode
             const [{ journal_mode }] = db.pragma('journal_mode') as [{ journal_mode: string }]
@@ -34,7 +36,7 @@ export const useDb = () => {
 
 const [getDatabase, setDatabase] = useDb()
 
-setDatabase(new Database(path.join(dbPath, 'app.db')))
+setDatabase('app.db')
 
 /**
  * Initialize the database
