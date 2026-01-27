@@ -2,7 +2,7 @@
     "name": "@toneflix/grithub",
     "type": "module",
     "version": "0.1.0",
-    "description": "Manage Github in style, in bulk and with ease.",
+    "description": "Command-line toolkit that blends hand-crafted workflows with OpenAPI-generated commands for GitHub.",
     "main": "bin/cli.js",
     "private": false,
     "homepage": "https://grithub.toneflix.net",
