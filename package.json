@@ -1,7 +1,7 @@
 {
     "name": "@toneflix/grithub",
     "type": "module",
-    "version": "0.1.5",
+    "version": "0.1.6",
     "description": "Command-line toolkit that blends hand-crafted workflows with OpenAPI-generated commands for GitHub.",
     "main": "bin/cli.js",
     "private": false,
@@ -50,7 +50,7 @@
         "docs:dev": "vitepress dev docs",
         "docs:build": "vitepress build docs",
         "docs:preview": "vitepress preview docs",
-        "preuninstall": "node uninstall.js"
+        "preuninstall": "node ./uninstall.js"
     },
     "dependencies": {
         "@antfu/install-pkg": "^1.1.0",
