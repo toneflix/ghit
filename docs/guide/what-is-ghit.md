@@ -388,7 +388,7 @@ Ready to try Ghit?
 1. **Install**
 
    ```bash
-   pnpm add -g @toneflix/ghit
+   pnpm add -g ghit
    ```
 
 2. **Authenticate**

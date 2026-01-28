@@ -9,15 +9,15 @@ Install Ghit globally using your preferred package manager:
 ::: code-group
 
 ```bash [pnpm]
-pnpm add -g @toneflix/ghit
+pnpm add -g ghit
 ```
 
 ```bash [npm]
-npm install -g @toneflix/ghit
+npm install -g ghit
 ```
 
 ```bash [yarn]
-yarn global add @toneflix/ghit
+yarn global add ghit
 ```
 
 :::

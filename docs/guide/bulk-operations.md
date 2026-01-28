@@ -454,7 +454,7 @@ jobs:
           node-version: '18'
 
       - name: Install Ghit
-        run: npm install -g @toneflix/ghit
+        run: npm install -g ghit
 
       - name: Update Issues
         run: ghit issues:update .github/issues

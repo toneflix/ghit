@@ -1,7 +1,7 @@
 # Ghit
 
-[![npm version](https://img.shields.io/npm/v/@toneflix/ghit.svg)](https://www.npmjs.com/package/@toneflix/ghit)
-[![License](https://img.shields.io/npm/l/@toneflix/ghit.svg)](https://github.com/toneflix/ghit/blob/main/LICENSE)
+[![npm version](https://img.shields.io/npm/v/ghit.svg)](https://www.npmjs.com/package/ghit)
+[![License](https://img.shields.io/npm/l/ghit.svg)](https://github.com/toneflix/ghit/blob/main/LICENSE)
 [![CI](https://github.com/toneflix/ghit/actions/workflows/ci.yml/badge.svg)](https://github.com/toneflix/ghit/actions/workflows/ci.yml)
 [![Deploy Docs](https://github.com/toneflix/ghit/actions/workflows/deploy-docs.yml/badge.svg)](https://github.com/toneflix/ghit/actions/workflows/deploy-docs.yml)
 
@@ -10,8 +10,8 @@ Command-line toolkit for GitHub: authenticate once, set a repo, and work with is
 ## Install
 
 ```bash
-pnpm add -g @toneflix/ghit
-# or npm i -g @toneflix/ghit
+pnpm add -g ghit
+# or npm i -g ghit
 ```
 
 ## Quick start

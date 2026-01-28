@@ -226,7 +226,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Install Ghit
-        run: npm install -g @toneflix/ghit
+        run: npm install -g ghit
 
       - name: Create Issue
         run: ghit issues:create --title "Automated"

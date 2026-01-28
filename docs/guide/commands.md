@@ -570,10 +570,10 @@ command not found: ghit
 
 ```bash
 # Reinstall globally
-npm install -g @toneflix/ghit
+npm install -g ghit
 
 # Or use npx
-npx @toneflix/ghit <command>
+npx ghit <command>
 ```
 
 ### Permission Denied
