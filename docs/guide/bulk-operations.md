@@ -80,14 +80,37 @@ ghit issues:seed ./issues --repo owner/repository
 
 ### Example Output
 
-```md
-✓ Creating issue 1/5: Setup CI Pipeline
-✓ Creating issue 2/5: Add Unit Tests
-✓ Creating issue 3/5: Update Documentation
-✓ Creating issue 4/5: Improve Error Handling
-✓ Creating issue 5/5: Add Logging
+```sh
+✔ DNS resolution successful: 140.82.121.6
+✔ GitHub access validated successfully.
+✔ Found 3 issue files
+✔ Found 2 existing issues.
 
-Successfully created 5 issues
+ℹ  INFO  Issues to CREATE:
+
+1. Initialize API with Next.js API routes, food and database configuration
+2. Define database schema and create Prisma models for all entities
+3. Create authentication endpoints for wallet-based login
+
+⚠️   CONFIRM  This will create 3 new issues on GitHub.
+✔ Do you want to proceed? Yes
+
+✔ Created #29: Initialize API with Next.js API routes, food and database configuration
+ℹ  URL  https://github.com/toneflix-forks/dummy/issues/29
+
+✔ Created #30: Define database schema and create Prisma models for all entities
+ℹ  URL  https://github.com/toneflix-forks/dummy/issues/30
+
+✔ Created #31: Create authentication endpoints for wallet-based login
+ℹ  URL  https://github.com/toneflix-forks/dummy/issues/31
+
+✔ All 3 issues processed.
+=========================
+✔ Created: 3
+x Failed: 0
+> Skipped: 0
+☑ Total: 3
+========================
 ```
 
 ## Updating Issues
@@ -149,12 +172,41 @@ ghit issues:update ./issues
    ```
 
 4. Only modified issues are updated:
-   ```md
-   ✓ Issue #1 updated (title, labels, body changed)
-   ⊘ Issue #2 skipped (no changes)
-   ✓ Issue #3 updated (body changed)
-   ⊘ Issue #4 skipped (no changes)
-   ⊘ Issue #5 skipped (no changes)
+
+   ```sh
+      ✔ DNS resolution successful: 140.82.121.5
+      ✔ GitHub access validated successfully.
+      ✔ Found 3 issue files
+      ✔ Found 5 existing issues.
+
+      ℹ  INFO  Issues to UPDATE:
+
+      >  Initialize API with Next.js API routes, food and database configuration
+         Existing: #29 (open)
+      >  Define database schema and create Prisma models for all entities
+         Existing: #30 (open)
+      >  Create authentication endpoints for wallet-based login
+         Existing: #31 (open)
+
+      ⚠️   CONFIRM  This will update 3 existing issues on GitHub.
+      ✔ Do you want to proceed? Yes
+
+      ✔ Updated #29: Initialize API with Next.js API routes, food and database configuration
+      ℹ  URL  https://github.com/toneflix-forks/dummy/issues/29
+
+      ✔ Updated #30: Define database schema and create Prisma models for all entities
+      ℹ  URL  https://github.com/toneflix-forks/dummy/issues/30
+
+      ✔ Updated #31: Create authentication endpoints for wallet-based login
+      ℹ  URL  https://github.com/toneflix-forks/dummy/issues/31
+
+      ✔ All 3 issues processed.
+      =========================
+      ✔ Updated: 3
+      x Failed: 0
+      > Skipped: 0
+      ☑ Total: 3
+      ========================
    ```
 
 ## Deleting Issues
