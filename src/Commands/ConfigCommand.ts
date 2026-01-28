@@ -5,7 +5,7 @@ import { Command } from '@h3ravel/musket'
 
 export class ConfigCommand extends Command {
     protected signature = 'config'
-    protected description = 'Configure Grithub'
+    protected description = 'Configure Ghit'
 
     async handle () {
         const [_, setCommand] = useCommand()

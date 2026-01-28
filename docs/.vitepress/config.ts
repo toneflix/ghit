@@ -1,28 +1,28 @@
 import { defineConfig } from 'vitepress'
 
 export default defineConfig({
-    title: 'Grithub',
-    description: 'Build, test, and manage your Grithub integration from the terminal',
+    title: 'Ghit',
+    description: 'Build, test, and manage your GitHub integration from the terminal',
     cleanUrls: true,
     lastUpdated: true,
     head: [
-        ['link', { rel: 'icon', href: 'https://grithub.toneflix.net/banner.png' }],
+        ['link', { rel: 'icon', href: 'https://ghit.toneflix.net/banner.png' }],
         ['meta', { name: 'viewport', content: 'width=device-width, initial-scale=1.0' }],
         ['meta', { name: 'theme-color', content: '#0d1117' }],
         ['meta', { name: 'apple-mobile-web-app-capable', content: 'yes' }],
         ['meta', { name: 'apple-mobile-web-app-status-bar-style', content: 'black' }],
-        ['link', { rel: 'apple-touch-icon', href: 'https://grithub.toneflix.net/banner.png' }],
-        ['link', { rel: 'mask-icon', href: 'https://grithub.toneflix.net/banner.png', color: '#0d1117' }],
-        ['meta', { name: 'msapplication-TileImage', content: 'https://grithub.toneflix.net/banner.png' }],
-        ['meta', { property: 'og:title', content: '@toneflix/grithub' }],
+        ['link', { rel: 'apple-touch-icon', href: 'https://ghit.toneflix.net/banner.png' }],
+        ['link', { rel: 'mask-icon', href: 'https://ghit.toneflix.net/banner.png', color: '#0d1117' }],
+        ['meta', { name: 'msapplication-TileImage', content: 'https://ghit.toneflix.net/banner.png' }],
+        ['meta', { property: 'og:title', content: 'Ghit' }],
         ['meta', { property: 'og:description', content: 'Command-line toolkit that blends hand-crafted workflows with OpenAPI-generated commands for GitHub.' }],
-        ['meta', { property: 'og:image', content: 'https://grithub.toneflix.net/banner.png' }],
-        ['meta', { property: 'og:url', content: 'https://grithub.toneflix.net' }],
+        ['meta', { property: 'og:image', content: 'https://ghit.toneflix.net/banner.png' }],
+        ['meta', { property: 'og:url', content: 'https://ghit.toneflix.net' }],
         ['meta', { name: 'og:type', content: 'website' }],
         ['meta', { property: 'twitter:card', content: 'summary_large_image' }],
-        ['meta', { name: 'twitter:title', content: '@toneflix/grithub' }],
+        ['meta', { name: 'twitter:title', content: 'Ghit' }],
         ['meta', { name: 'twitter:description', content: 'Command-line toolkit that blends hand-crafted workflows with OpenAPI-generated commands for GitHub.' }],
-        ['meta', { name: 'twitter:image', content: 'https://grithub.toneflix.net/banner.png' }],
+        ['meta', { name: 'twitter:image', content: 'https://ghit.toneflix.net/banner.png' }],
         ['meta', { name: 'twitter:site', content: '@toneflixx' }],
         ['meta', { name: 'twitter:creator', content: '@toneflixx' }],
     ],
@@ -33,8 +33,8 @@ export default defineConfig({
             { text: 'Guide', link: '/guide/getting-started' },
             { text: 'API Reference', link: '/api/issues' },
             { text: 'Bulk Operations', link: '/guide/bulk-operations' },
-            { text: 'GitHub', link: 'https://github.com/toneflix/grithub' },
-            { text: 'npm', link: 'https://www.npmjs.com/package/@toneflix/grithub' }
+            { text: 'GitHub', link: 'https://github.com/toneflix/ghit' },
+            { text: 'npm', link: 'https://www.npmjs.com/package/ghit' }
         ],
 
         sidebar: {
@@ -42,7 +42,7 @@ export default defineConfig({
                 {
                     text: 'Introduction',
                     items: [
-                        { text: 'What is Grithub?', link: '/guide/what-is-grithub' },
+                        { text: 'What is Ghit?', link: '/guide/what-is-ghit' },
                         { text: 'Getting Started', link: '/guide/getting-started' },
                         { text: 'Quick Start', link: '/guide/quick-start' }
                     ]
@@ -87,7 +87,7 @@ export default defineConfig({
         },
 
         socialLinks: [
-            { icon: 'github', link: 'https://github.com/toneflix/grithub' }
+            { icon: 'github', link: 'https://github.com/toneflix/ghit' }
         ],
 
         footer: {

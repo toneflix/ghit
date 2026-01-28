@@ -26,7 +26,7 @@ beforeAll(async () => {
     program = await Kernel.init(
         app,
         {
-            packages: ['toneflix/grithub'],
+            packages: ['ghit'],
             skipParsing: true,
             name: 'musket-cli',
             discoveryPaths: [path.join(process.cwd(), 'src/Commands/*.ts')]

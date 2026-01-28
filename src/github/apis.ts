@@ -1,4 +1,4 @@
-import { XAPITree } from '@toneflix/grithub'
+import { XAPITree } from 'ghit'
 
 const APIs = {
     issues: [

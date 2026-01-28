@@ -30,10 +30,10 @@ export class IssuesSeeder {
     setFilePath (content: string, filePath?: string): string {
         if (!filePath) return content
 
-        if (content.includes('<!-- grithub#filepath:')) {
-            content = content.replace(/<!--\s*grithub#filepath:\s*.+?\s*-->/i, `<!-- grithub#filepath: ${filePath} -->`)
+        if (content.includes('<!-- ghit#filepath:')) {
+            content = content.replace(/<!--\s*ghit#filepath:\s*.+?\s*-->/i, `<!-- ghit#filepath: ${filePath} -->`)
         } else {
-            content = `<!-- grithub#filepath: ${filePath} -->\n\n` + content
+            content = `<!-- ghit#filepath: ${filePath} -->\n\n` + content
         }
 
         return content
@@ -46,7 +46,7 @@ export class IssuesSeeder {
      * @returns 
      */
     getFilePath (content: string): string | undefined {
-        const fileNameRegex = /<!--\s*grithub#filepath:\s*(.+?)\s*-->/i
+        const fileNameRegex = /<!--\s*ghit#filepath:\s*(.+?)\s*-->/i
         const match = content.match(fileNameRegex)
 
         if (match) {

@@ -1,4 +1,4 @@
-import { GeneratedParam, GeneratedTree } from '../Contracts/Grithub'
+import { GeneratedParam, GeneratedTree } from '../Contracts/Ghit'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import path, { dirname } from 'node:path'
 import { read, write } from 'src/db'
@@ -183,10 +183,10 @@ export class ApisGenerator {
      */
     static getOutputPath (type: 'global' | 'local' = 'local'): string {
         if (type === 'global') {
-            return path.join(homedir(), '.grithub/apis.generated.js')
+            return path.join(homedir(), '.ghit/apis.generated.js')
         }
 
-        return path.join(process.cwd(), '.grithub/apis.generated.js')
+        return path.join(process.cwd(), '.ghit/apis.generated.js')
     }
 
     /**

@@ -5,7 +5,7 @@ import { mkdirSync } from 'fs'
 import path from 'path'
 
 let db: Database.Database
-let dbPath = path.join(homedir(), '.grithub')
+let dbPath = path.join(homedir(), '.ghit')
 
 mkdirSync(dbPath, { recursive: true })
 

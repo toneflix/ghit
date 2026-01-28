@@ -1,20 +1,20 @@
 {
-    "name": "@toneflix/grithub",
+    "name": "ghit",
     "type": "module",
     "version": "0.1.6",
     "description": "Command-line toolkit that blends hand-crafted workflows with OpenAPI-generated commands for GitHub.",
     "main": "bin/cli.js",
     "private": false,
-    "homepage": "https://grithub.toneflix.net",
+    "homepage": "https://ghit.toneflix.net",
     "repository": {
-        "url": "https://github.com/toneflix/grithub.git",
+        "url": "https://github.com/toneflix/ghit.git",
         "type": "git"
     },
     "publishConfig": {
         "access": "public"
     },
     "bin": {
-        "grithub": "bin/cli.js"
+        "ghit": "bin/cli.js"
     },
     "exports": {
         ".": "./bin/cli.js"
@@ -25,7 +25,7 @@
         "bin/cli.cjs"
     ],
     "keywords": [
-        "grithub",
+        "ghit",
         "cli",
         "command-line",
         "tool",
@@ -44,7 +44,7 @@
         "build": "tsdown",
         "dummy": "node ./tests/test.sever.js",
         "version": "pnpm run build",
-        "unlink": "pnpm uninstall --global @toneflix/grithub",
+        "unlink": "pnpm uninstall --global ghit",
         "release": "pnpm build && pnpm changeset version && pnpm changeset publish",
         "publish-it": "pnpm build && pnpm publish --tag latest",
         "docs:dev": "vitepress dev docs",

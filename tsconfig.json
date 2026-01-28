@@ -16,8 +16,8 @@
     "emitDecoratorMetadata": true,
     "paths": {
       "src/*": ["./src/*"],
-      "@toneflix/grithub": ["./src/index.ts"],
-      "@toneflix/grithub/*": ["./src/*"]
+      "ghit": ["./src/index.ts"],
+      "ghit/*": ["./src/*"]
     }
   },
   "include": ["./**/*.d.ts", "./github/*", "./test/*", "./src/*"],

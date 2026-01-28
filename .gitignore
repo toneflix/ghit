@@ -151,4 +151,4 @@ docs/.vitepress/cache
 /bin
 apis.generated.ts
 apis.generated.js
-.grithub
+.ghit

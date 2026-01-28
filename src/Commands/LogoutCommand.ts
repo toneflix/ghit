@@ -5,7 +5,7 @@ import { wait } from '../helpers'
 
 export class LogoutCommand extends Command {
     protected signature = 'logout'
-    protected description = 'Log out of Grithub CLI'
+    protected description = 'Log out of Ghit CLI'
 
     async handle () {
         const [_, setCommand] = useCommand()
