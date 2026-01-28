@@ -27,7 +27,7 @@ export default defineConfig({
         ['meta', { name: 'twitter:creator', content: '@toneflixx' }],
     ],
     themeConfig: {
-        logo: '/banner.png',
+        logo: '/logo.png',
 
         nav: [
             { text: 'Guide', link: '/guide/getting-started' },
