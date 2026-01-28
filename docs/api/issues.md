@@ -7,7 +7,7 @@ Commands for managing GitHub issues.
 Launch an interactive interface for managing issues.
 
 ```bash
-grithub issues [repo]
+ghit issues [repo]
 ```
 
 ### Arguments
@@ -27,10 +27,10 @@ grithub issues [repo]
 
 ```bash
 # Use default repository
-grithub issues
+ghit issues
 
 # Specify repository
-grithub issues toneflix/grithub
+ghit issues toneflix/ghit
 ```
 
 ## Seed Issues
@@ -38,7 +38,7 @@ grithub issues toneflix/grithub
 Create multiple issues from markdown files.
 
 ```bash
-grithub issues:seed <directory> [options]
+ghit issues:seed <directory> [options]
 ```
 
 ### Arguments
@@ -69,7 +69,7 @@ Can include multiple paragraphs and **formatting**.
 ### Example
 
 ```bash
-grithub issues:seed ./my-issues
+ghit issues:seed ./my-issues
 ```
 
 ## Update Issues
@@ -77,7 +77,7 @@ grithub issues:seed ./my-issues
 Update existing issues based on markdown files.
 
 ```bash
-grithub issues:update <directory> [options]
+ghit issues:update <directory> [options]
 ```
 
 ### Arguments
@@ -98,7 +98,7 @@ grithub issues:update <directory> [options]
 ### Example
 
 ```bash
-grithub issues:update ./my-issues
+ghit issues:update ./my-issues
 ```
 
 ## Delete Issues
@@ -106,7 +106,7 @@ grithub issues:update ./my-issues
 Interactively delete issues permanently with multi select support.
 
 ```bash
-grithub issues:delete <repo>
+ghit issues:delete <repo>
 ```
 
 ### Arguments
@@ -117,10 +117,10 @@ grithub issues:delete <repo>
 
 ```bash
 # Delete issues 1-50
-grithub issues:delete
+ghit issues:delete
 
 # Delete issues in specific repo
-grithub issues:delete owner/repo
+ghit issues:delete owner/repo
 ```
 
 ::: warning
@@ -129,12 +129,12 @@ This action is irreversible. Deleted issues cannot be recovered. You can add the
 
 ## Generated Commands
 
-After running `grithub generate:apis`, additional issue commands become available from the Github OpenAPI Spec:
+After running `ghit generate:apis`, additional issue commands become available from the Github OpenAPI Spec:
 
 ### List Repository Issues
 
 ```bash
-grithub issues:list-for-repo [options]
+ghit issues:list-for-repo [options]
 ```
 
 #### Options
@@ -152,9 +152,9 @@ grithub issues:list-for-repo [options]
 #### Example
 
 ```bash
-grithub issues:list-for-repo \
+ghit issues:list-for-repo \
   --owner toneflix \
-  --repo grithub \
+  --repo ghit \
   --state open \
   --labels bug \
   --per_page 50
@@ -163,7 +163,7 @@ grithub issues:list-for-repo \
 ### Get Single Issue
 
 ```bash
-grithub issues:get --issue_number <number> [options]
+ghit issues:get --issue_number <number> [options]
 ```
 
 #### Options
@@ -175,13 +175,13 @@ grithub issues:get --issue_number <number> [options]
 #### Example
 
 ```bash
-grithub issues:get --owner toneflix --repo grithub --issue_number 42
+ghit issues:get --owner toneflix --repo ghit --issue_number 42
 ```
 
 ### Add Labels
 
 ```bash
-grithub issues:addLabels --issue_number <number> --labels <labels> [options]
+ghit issues:addLabels --issue_number <number> --labels <labels> [options]
 ```
 
 #### Options
@@ -194,17 +194,17 @@ grithub issues:addLabels --issue_number <number> --labels <labels> [options]
 #### Example
 
 ```bash
-grithub issues:addLabels \
+ghit issues:addLabels \
   --issue_number 42 \
   --labels "bug,priority" \
   --owner toneflix \
-  --repo grithub
+  --repo ghit
 ```
 
 ### Update Issue
 
 ```bash
-grithub issues:update --issue_number <number> [options]
+ghit issues:update --issue_number <number> [options]
 ```
 
 #### Options
@@ -221,12 +221,12 @@ grithub issues:update --issue_number <number> [options]
 #### Example
 
 ```bash
-grithub issues:update \
+ghit issues:update \
   --issue_number 42 \
   --title "Updated title" \
   --state closed \
   --owner toneflix \
-  --repo grithub
+  --repo ghit
 ```
 
 ## Best Practices
@@ -236,8 +236,8 @@ grithub issues:update \
 Set a default repository to avoid repeating `--owner` and `--repo`:
 
 ```bash
-grithub set-repo toneflix/grithub
-grithub issues:create --title "Bug fix"
+ghit set-repo toneflix/ghit
+ghit issues:create --title "Bug fix"
 ```
 
 ### Bulk Operations
@@ -245,9 +245,9 @@ grithub issues:create --title "Bug fix"
 For creating many issues, use the seeder:
 
 1. Create markdown files in a directory
-2. Run `grithub issues:seed ./directory`
+2. Run `ghit issues:seed ./directory`
 3. Track changes in git
-4. Update with `grithub issues:update ./directory`
+4. Update with `ghit issues:update ./directory`
 
 ### Labels and Assignees
 
@@ -266,5 +266,5 @@ assignees: ['maintainer']
 Enable debug mode for detailed error messages:
 
 ```bash
-grithub config --debug true
+ghit config --debug true
 ```

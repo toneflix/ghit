@@ -1,10 +1,10 @@
 # Authentication
 
-Grithub uses GitHub OAuth for secure authentication, storing your credentials locally for persistent access.
+Ghit uses GitHub OAuth for secure authentication, storing your credentials locally for persistent access.
 
 ## Overview
 
-Authentication in Grithub:
+Authentication in Ghit:
 
 - Uses GitHub's OAuth flow
 - Stores token locally in SQLite database
@@ -18,7 +18,7 @@ Authentication in Grithub:
 The simplest way to authenticate:
 
 ```bash
-grithub login
+ghit login
 ```
 
 This will:
@@ -34,7 +34,7 @@ This will:
 ### What Happens During Login
 
 ```bash
-$ grithub login
+$ ghit login
 
 Please open the following URL in your browser to authenticate: https://github.com/login/device
 Press Enter to open your browser, or  Ctrl+C  to cancel
@@ -55,7 +55,7 @@ Press Enter to open your browser, or  Ctrl+C  to cancel
 
 ## Required Permissions
 
-Grithub requests these OAuth scopes:
+Ghit requests these OAuth scopes:
 
 - `repo` - Full control of private repositories
   - Read and write access to code
@@ -91,7 +91,7 @@ Tokens are stored in an SQLite database that contains:
 Verify you're logged in:
 
 ```bash
-grithub info
+ghit info
 ```
 
 Output includes:
@@ -116,7 +116,7 @@ Output includes:
 Revoke local access:
 
 ```bash
-grithub logout
+ghit logout
 ```
 
 This will:
@@ -139,8 +139,8 @@ If your token expires or is revoked:
 ERROR: You're not signed in, please run the [login] command
 
 # Simply login again
-grithub logout
-grithub login
+ghit logout
+ghit login
 ```
 
 ## Personal Access Tokens (Alternative)
@@ -160,13 +160,13 @@ Set as environment variable:
 
 ```bash
 export GITHUB_TOKEN="ghp_your_token_here"
-grithub issues:list
+ghit issues:list
 ```
 
 Or configure directly:
 
 ```bash
-grithub config
+ghit config
 # Select "Token" option
 # Paste your token
 ```
@@ -177,14 +177,14 @@ To switch between GitHub accounts:
 
 ```bash
 # Logout of current account
-grithub logout
+ghit logout
 
 # Login with different account
-grithub login
+ghit login
 ```
 
 ::: info
-Grithub doesn't support multiple simultaneous accounts. You must logout and re-login to switch.
+Ghit doesn't support multiple simultaneous accounts. You must logout and re-login to switch.
 :::
 
 ## Authentication in Scripts
@@ -196,7 +196,7 @@ For automated scripts:
 ```bash
 #!/bin/bash
 export GITHUB_TOKEN="$YOUR_TOKEN"
-grithub issues:create --title "Automated issue"
+ghit issues:create --title "Automated issue"
 ```
 
 ### Option 2: Pre-authenticated Session
@@ -204,11 +204,11 @@ grithub issues:create --title "Automated issue"
 ```bash
 #!/bin/bash
 # Login once
-grithub login
+ghit login
 
 # Run multiple commands
-grithub issues:create --title "Issue 1"
-grithub issues:create --title "Issue 2"
+ghit issues:create --title "Issue 1"
+ghit issues:create --title "Issue 2"
 ```
 
 ## CI/CD Integration
@@ -225,11 +225,11 @@ jobs:
   create:
     runs-on: ubuntu-latest
     steps:
-      - name: Install Grithub
-        run: npm install -g @toneflix/grithub
+      - name: Install Ghit
+        run: npm install -g @toneflix/ghit
 
       - name: Create Issue
-        run: grithub issues:create --title "Automated"
+        run: ghit issues:create --title "Automated"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -241,7 +241,7 @@ jobs:
 export GITHUB_TOKEN="$CI_GITHUB_TOKEN"
 
 # Run commands
-grithub issues:seed ./issues
+ghit issues:seed ./issues
 ```
 
 ## Troubleshooting
@@ -255,7 +255,7 @@ ERROR: You're not signed in, please run the [login] command
 **Solution:**
 
 ```bash
-grithub login
+ghit login
 ```
 
 ### "Token expired" Error
@@ -263,17 +263,17 @@ grithub login
 **Solution:**
 
 ```bash
-grithub logout
-grithub login
+ghit logout
+ghit login
 ```
 
 ### "Insufficient permissions" Error
 
 **Solution:**
 
-1. Logout: `grithub logout`
+1. Logout: `ghit logout`
 2. Revoke app at [GitHub Settings](https://github.com/settings/applications)
-3. Login again: `grithub login` (re-authorize with required scopes)
+3. Login again: `ghit login` (re-authorize with required scopes)
 
 ### Browser Doesn't Open
 
@@ -282,7 +282,7 @@ grithub login
 Manually copy the URL from terminal:
 
 ```bash
-$ grithub login
+$ ghit login
 Opening browser to: https://github.com/login/oauth/authorize?...
 
 # Copy URL and paste in browser
@@ -292,17 +292,17 @@ Opening browser to: https://github.com/login/oauth/authorize?...
 
 **Solution:**
 
-Ensure no other Grithub instances are running:
+Ensure no other Ghit instances are running:
 
 ```bash
 # Check for running processes
-ps aux | grep grithub
+ps aux | grep ghit
 
 # Kill if needed
 kill -9 <PID>
 
 # Try again
-grithub login
+ghit login
 ```
 
 ## Security Best Practices
@@ -338,6 +338,6 @@ Regularly review:
 
 ## Next Steps
 
-- [Configuration](/guide/configuration) - Customize Grithub settings
+- [Configuration](/guide/configuration) - Customize Ghit settings
 - [Commands](/guide/commands) - Learn available commands
 - [Quick Start](/guide/quick-start) - Start using authenticated features

@@ -1,6 +1,6 @@
 # Development
 
-Guide for contributing to Grithub development.
+Guide for contributing to Ghit development.
 
 ## Prerequisites
 
@@ -22,8 +22,8 @@ Guide for contributing to Grithub development.
 ### Clone Repository
 
 ```bash
-git clone https://github.com/toneflix/grithub.git
-cd grithub
+git clone https://github.com/toneflix/ghit.git
+cd ghit
 ```
 
 ### Install Dependencies
@@ -42,7 +42,7 @@ This installs:
 ### Project Structure
 
 ```md
-grithub/
+ghit/
 ├── src/ # Source code
 │ ├── Commands/ # Command implementations
 │ ├── Contracts/ # TypeScript interfaces
@@ -228,7 +228,7 @@ pnpm runner example John --greeting="Hi"
 ### Database Location
 
 ```md
-~/.grithub/app.db
+~/.ghit/app.db
 ```
 
 ### Database Operations
@@ -269,14 +269,14 @@ const octokit = useOctokit();
 // List issues
 const issues = await octokit.rest.issues.listForRepo({
   owner: 'toneflix',
-  repo: 'grithub',
+  repo: 'ghit',
   state: 'open',
 });
 
 // Create issue
 await octokit.rest.issues.create({
   owner: 'toneflix',
-  repo: 'grithub',
+  repo: 'ghit',
   title: 'New issue',
   body: 'Issue description',
 });
@@ -411,7 +411,7 @@ Description of the feature.
 ## Usage
 
 \`\`\`bash
-grithub my-command
+ghit my-command
 \`\`\`
 
 ## Options
@@ -441,7 +441,7 @@ sidebar: {
 
 ```bash
 # In development
-export GRITHUB_DEBUG=true
+export GHIT_DEBUG=true
 pnpm runner <command>
 ```
 

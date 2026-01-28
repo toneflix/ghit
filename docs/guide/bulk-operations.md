@@ -1,6 +1,6 @@
 # Bulk Operations
 
-Grithub excels at managing multiple issues at once, saving time when setting up new repositories or performing batch updates.
+Ghit excels at managing multiple issues at once, saving time when setting up new repositories or performing batch updates.
 
 ## Overview
 
@@ -61,7 +61,7 @@ Implement GitHub Actions workflow for automated testing and deployment.
 ### Running the Seeder
 
 ```bash
-grithub issues:seed ./issues
+ghit issues:seed ./issues
 ```
 
 This will:
@@ -75,7 +75,7 @@ This will:
 ### With Specific Repository
 
 ```bash
-grithub issues:seed ./issues --repo owner/repository
+ghit issues:seed ./issues --repo owner/repository
 ```
 
 ### Example Output
@@ -116,7 +116,7 @@ Only updates when content actually changes:
 ### Running the Updater
 
 ```bash
-grithub issues:update ./issues
+ghit issues:update ./issues
 ```
 
 ### Workflow Example
@@ -124,7 +124,7 @@ grithub issues:update ./issues
 1. Create initial issues:
 
    ```bash
-   grithub issues:seed ./issues
+   ghit issues:seed ./issues
    ```
 
 2. Make changes to markdown files:
@@ -145,7 +145,7 @@ grithub issues:update ./issues
 3. Update the issues:
 
    ```bash
-   grithub issues:update ./issues
+   ghit issues:update ./issues
    ```
 
 4. Only modified issues are updated:
@@ -164,7 +164,7 @@ Remove multiple issues in a range.
 ### Basic Usage
 
 ```bash
-grithub issues:delete
+ghit issues:delete
 ```
 
 ### With Confirmation
@@ -191,7 +191,7 @@ The command will:
 ### Specific Repository
 
 ```bash
-grithub issues:delete owner/repository
+ghit issues:delete owner/repository
 ```
 
 ::: danger
@@ -239,7 +239,7 @@ project/
 3. **Seed to GitHub**
 
    ```bash
-   grithub issues:seed .github/issues
+   ghit issues:seed .github/issues
    ```
 
 4. **Team Member Makes Changes**
@@ -253,7 +253,7 @@ project/
 5. **Sync to GitHub**
    ```bash
    git pull
-   grithub issues:update .github/issues
+   ghit issues:update .github/issues
    ```
 
 ## Best Practices
@@ -354,7 +354,7 @@ Before bulk deletion, if you have generated commands:
 
 ```bash
 # Export issues first (using generated commands)
-grithub issues:list-for-repo > backup.json
+ghit issues:list-for-repo > backup.json
 ```
 
 ## Real-World Examples
@@ -380,11 +380,11 @@ EOF
 # Create more templates...
 
 # Seed to multiple projects
-grithub set-repo org/project-a
-grithub issues:seed project-templates/standard-setup
+ghit set-repo org/project-a
+ghit issues:seed project-templates/standard-setup
 
-grithub set-repo org/project-b
-grithub issues:seed project-templates/standard-setup
+ghit set-repo org/project-b
+ghit issues:seed project-templates/standard-setup
 ```
 
 ### Migration from Other Tools
@@ -396,7 +396,7 @@ Convert issues from Jira, Linear, etc.:
 # 2. Place in directory
 # 3. Seed to GitHub
 
-grithub issues:seed ./migrated-issues
+ghit issues:seed ./migrated-issues
 ```
 
 ### Sprint Planning
@@ -410,7 +410,7 @@ sprint-2024-Q1/
 ├── 002-user-story-2.md
 └── 003-bug-fixes.md
 
-grithub issues:seed sprint-2024-Q1
+ghit issues:seed sprint-2024-Q1
 ```
 
 ### Quarterly Goals
@@ -423,7 +423,7 @@ okrs-2024-Q1/
 ├── objective-2-improve-performance.md
 └── objective-3-expand-features.md
 
-grithub issues:seed okrs-2024-Q1
+ghit issues:seed okrs-2024-Q1
 ```
 
 ## Automation
@@ -453,11 +453,11 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install Grithub
-        run: npm install -g @toneflix/grithub
+      - name: Install Ghit
+        run: npm install -g @toneflix/ghit
 
       - name: Update Issues
-        run: grithub issues:update .github/issues
+        run: ghit issues:update .github/issues
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -487,7 +487,7 @@ Implement ${FEATURE} feature for the application.
 EOF
 done
 
-grithub issues:seed ./issues
+ghit issues:seed ./issues
 ```
 
 ## Troubleshooting
@@ -500,9 +500,9 @@ If you hit rate limits during bulk operations:
 # Reduce concurrency (future feature)
 # For now, seed in smaller batches
 
-grithub issues:seed ./issues/batch-1
+ghit issues:seed ./issues/batch-1
 sleep 60
-grithub issues:seed ./issues/batch-2
+ghit issues:seed ./issues/batch-2
 ```
 
 ### Validation Errors
@@ -514,8 +514,8 @@ If issues fail to create:
 3. Confirm assignees have access
 4. Enable debug mode:
    ```bash
-   grithub config --debug true
-   grithub issues:seed ./issues
+   ghit config --debug true
+   ghit issues:seed ./issues
    ```
 
 ### Diff Detection Issues
@@ -533,8 +533,8 @@ Ensure your token has proper scopes:
 
 ```bash
 # Re-login to refresh permissions
-grithub logout
-grithub login
+ghit logout
+ghit login
 ```
 
 Required scopes:
@@ -576,8 +576,8 @@ issues/
 Seed by category:
 
 ```bash
-grithub issues:seed issues/features
-grithub issues:seed issues/bugs
+ghit issues:seed issues/features
+ghit issues:seed issues/bugs
 ```
 
 ## Next Steps

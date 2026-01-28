@@ -1,6 +1,6 @@
 # Using Generated APIs
 
-Grithub can automatically generate CLI commands from GitHub's OpenAPI specification, giving you access to the entire GitHub REST API surface without manual implementation.
+Ghit can automatically generate CLI commands from GitHub's OpenAPI specification, giving you access to the entire GitHub REST API surface without manual implementation.
 
 ## Overview
 
@@ -12,10 +12,10 @@ Generated commands provide:
 
 ## Generating Commands
 
-Run the generator to create `.grithub/apis.generated.js`:
+Run the generator to create `.ghit/apis.generated.js`:
 
 ```bash
-grithub generate:apis
+ghit generate:apis
 ```
 
 This process:
@@ -23,10 +23,10 @@ This process:
 1. Downloads GitHub's OpenAPI specification
 2. Parses all endpoint definitions
 3. Generates CLI commands with proper signatures
-4. Writes output to `.grithub/apis.generated.js` in your current working directory.
+4. Writes output to `.ghit/apis.generated.js` in your current working directory.
 
 ::: tip
-Add `.grithub/` to your `.gitignore` - regenerate locally as needed.
+Add `.ghit/` to your `.gitignore` - regenerate locally as needed.
 :::
 
 ## Command Structure
@@ -34,7 +34,7 @@ Add `.grithub/` to your `.gitignore` - regenerate locally as needed.
 Generated commands follow this pattern:
 
 ```bash
-grithub <namespace>:<method> [options]
+ghit <namespace>:<method> [options]
 ```
 
 - `namespace` - API resource (e.g., `issues`, `repos`, `users`)
@@ -47,22 +47,22 @@ grithub <namespace>:<method> [options]
 
 ```bash
 # List issues
-grithub issues:list-for-repo toneflix --repo grithub --state open
+ghit issues:list-for-repo toneflix --repo ghit --state open
 
 # Get single issue
-grithub issues:get --owner toneflix --repo grithub --issue_number 42
+ghit issues:get --owner toneflix --repo ghit --issue_number 42
 
 # Create issue
-grithub issues:create \
+ghit issues:create \
   --owner toneflix \
-  --repo grithub \
+  --repo ghit \
   --title "Feature request" \
   --body "Add support for X"
 
 # Add labels
-grithub issues:addLabels \
+ghit issues:addLabels \
   --owner toneflix \
-  --repo grithub \
+  --repo ghit \
   --issue_number 42 \
   --labels "bug,priority"
 ```
@@ -71,68 +71,68 @@ grithub issues:addLabels \
 
 ```bash
 # List user repos
-grithub repos:list-for-authenticated-user --per_page 100
+ghit repos:list-for-authenticated-user --per_page 100
 
 # Get repository
-grithub repos:get --owner toneflix --repo grithub
+ghit repos:get --owner toneflix --repo ghit
 
 # Create repository
-grithub repos:create-for-authenticated-user \
+ghit repos:create-for-authenticated-user \
   --name "new-repo" \
   --description "My new repository" \
   --private false
 
 # List collaborators
-grithub repos:listCollaborators --owner toneflix --repo grithub
+ghit repos:listCollaborators --owner toneflix --repo ghit
 ```
 
 ### Organizations
 
 ```bash
 # List organizations
-grithub orgs:list-for-authenticated-user
+ghit orgs:list-for-authenticated-user
 
 # Get organization
-grithub orgs:get --org toneflix
+ghit orgs:get --org toneflix
 
 # List members
-grithub orgs:listMembers --org toneflix --per_page 50
+ghit orgs:listMembers --org toneflix --per_page 50
 ```
 
 ### Users
 
 ```bash
 # Get authenticated user
-grithub users:get-authenticated
+ghit users:get-authenticated
 
 # Get user by username
-grithub users:getByUsername --username toneflix
+ghit users:getByUsername --username toneflix
 
 # List followers
-grithub users:listFollowersForAuthenticatedUser
+ghit users:listFollowersForAuthenticatedUser
 ```
 
 ### Pull Requests
 
 ```bash
 # List pull requests
-grithub pulls:list --owner toneflix --repo grithub --state open
+ghit pulls:list --owner toneflix --repo ghit --state open
 
 # Get pull request
-grithub pulls:get --owner toneflix --repo grithub --pull_number 10
+ghit pulls:get --owner toneflix --repo ghit --pull_number 10
 
 # Create pull request
-grithub pulls:create \
+ghit pulls:create \
   --owner toneflix \
-  --repo grithub \
+  --repo ghit \
   --title "Fix bug" \
   --head "feature-branch" \
   --base "main"
 
 # Merge pull request
-grithub pulls:merge \
+ghit pulls:merge \
   --owner toneflix \
-  --repo grithub \
+  --repo ghit \
   --pull_number 10 \
   --merge_method squash
 ```
@@ -141,16 +141,16 @@ grithub pulls:merge \
 
 ```bash
 # List gists
-grithub gists:list
+ghit gists:list
 
 # Create gist
-grithub gists:create \
+ghit gists:create \
   --description "Code snippet" \
   --public true \
   --files '{"hello.js": {"content": "console.log(\"Hello\")"}}'
 
 # Get gist
-grithub gists:get --gist_id abc123
+ghit gists:get --gist_id abc123
 ```
 
 ## Parameter Types
@@ -201,12 +201,12 @@ When you set a default repository, `--owner` and `--repo` become optional:
 
 ```bash
 # Set default
-grithub set-repo toneflix/grithub
+ghit set-repo toneflix/ghit
 
 # Now these work without --owner/--repo
-grithub issues:list-for-repo --state open
-grithub issues:get --issue_number 42
-grithub pulls:list
+ghit issues:list-for-repo --state open
+ghit issues:get --issue_number 42
+ghit pulls:list
 ```
 
 ## Discovering Available Commands
@@ -214,13 +214,13 @@ grithub pulls:list
 List all commands including generated ones:
 
 ```bash
-grithub --help
+ghit --help
 ```
 
 Get help for a specific command:
 
 ```bash
-grithub issues:create --help
+ghit issues:create --help
 ```
 
 ## Pagination
@@ -228,9 +228,9 @@ grithub issues:create --help
 Many list commands support pagination:
 
 ```bash
-grithub issues:list-for-repo \
+ghit issues:list-for-repo \
   --owner toneflix \
-  --repo grithub \
+  --repo ghit \
   --per_page 100 \
   --page 2
 ```
@@ -245,9 +245,9 @@ Common pagination parameters:
 List endpoints often support filtering:
 
 ```bash
-grithub issues:list-for-repo \
+ghit issues:list-for-repo \
   --owner toneflix \
-  --repo grithub \
+  --repo ghit \
   --state open \
   --labels bug \
   --sort created \
@@ -266,7 +266,7 @@ Generated commands respect GitHub's rate limits. If you hit a limit:
 Check your rate limit:
 
 ```bash
-grithub rate-limit:get
+ghit rate-limit:get
 ```
 
 ## Error Handling
@@ -274,12 +274,12 @@ grithub rate-limit:get
 Enable debug mode for detailed errors:
 
 ```bash
-grithub config --debug true
+ghit config --debug true
 ```
 
 Common errors:
 
-- **401 Unauthorized** - Run `grithub login` to authenticate
+- **401 Unauthorized** - Run `ghit login` to authenticate
 - **404 Not Found** - Check owner/repo names
 - **422 Validation Failed** - Review required parameters
 - **403 Forbidden** - Check token permissions or rate limits
@@ -293,7 +293,7 @@ Regenerate when:
 - Generated file becomes corrupted
 
 ```bash
-grithub generate:apis
+ghit generate:apis
 ```
 
 The process is safe to run multiple times.
@@ -305,7 +305,7 @@ The process is safe to run multiple times.
 Set once, use everywhere:
 
 ```bash
-grithub set-repo your-org/your-repo
+ghit set-repo your-org/your-repo
 ```
 
 ### 2. Save Common Commands
@@ -313,8 +313,8 @@ grithub set-repo your-org/your-repo
 Create shell aliases for frequent operations:
 
 ```bash
-alias gi-list='grithub issues:list-for-repo --state open'
-alias gi-create='grithub issues:create'
+alias gi-list='ghit issues:list-for-repo --state open'
+alias gi-create='ghit issues:create'
 ```
 
 ### 3. Script Workflows
@@ -325,7 +325,7 @@ Use generated commands in scripts:
 #!/bin/bash
 # Create multiple issues
 for title in "Task 1" "Task 2" "Task 3"; do
-  grithub issues:create --title "$title" --labels "automated"
+  ghit issues:create --title "$title" --labels "automated"
 done
 ```
 
@@ -334,7 +334,7 @@ done
 Process JSON output:
 
 ```bash
-grithub issues:list-for-repo --state open | jq '.[] | .title'
+ghit issues:list-for-repo --state open | jq '.[] | .title'
 ```
 
 ## API Documentation
@@ -350,9 +350,9 @@ For detailed endpoint documentation, see:
 
 If generated commands don't appear:
 
-1. Verify `.grithub/apis.generated.js` exists in your current working directory.
+1. Verify `.ghit/apis.generated.js` exists in your current working directory.
 2. Check file isn't corrupted
-3. Regenerate with `grithub generate:apis`
+3. Regenerate with `ghit generate:apis`
 
 ### Parameter Errors
 

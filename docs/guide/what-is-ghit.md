@@ -1,6 +1,6 @@
-# What is Grithub?
+# What is Ghit?
 
-Grithub is a powerful command-line toolkit for GitHub that combines hand-crafted workflows with auto-generated commands from the GitHub OpenAPI specification.
+Ghit is a powerful command-line toolkit for GitHub that combines hand-crafted workflows with auto-generated commands from the GitHub OpenAPI specification.
 
 ## The Problem
 
@@ -13,7 +13,7 @@ Managing GitHub repositories through the web interface can be:
 
 ## The Solution
 
-Grithub provides:
+Ghit provides:
 
 ### Hand-Crafted Workflows
 
@@ -47,14 +47,14 @@ Access the entire GitHub API:
 Set a default repository once:
 
 ```bash
-grithub set-repo owner/repository
+ghit set-repo owner/repository
 ```
 
 Then work without repeating flags:
 
 ```bash
-grithub issues:create --title "Bug fix"
-grithub issues:listForRepo --state open
+ghit issues:create --title "Bug fix"
+ghit issues:listForRepo --state open
 ```
 
 ### Issue Management
@@ -64,7 +64,7 @@ grithub issues:listForRepo --state open
 Launch a dashboard to browse and manage issues:
 
 ```bash
-grithub issues
+ghit issues
 ```
 
 Features:
@@ -87,7 +87,7 @@ issues/
 ```
 
 ```bash
-grithub issues:seed ./issues
+ghit issues:seed ./issues
 ```
 
 #### Smart Updates
@@ -95,10 +95,10 @@ grithub issues:seed ./issues
 Modify markdown files and sync changes:
 
 ```bash
-grithub issues:update ./issues
+ghit issues:update ./issues
 ```
 
-Grithub detects:
+Ghit detects:
 
 - Title changes
 - Label updates
@@ -110,26 +110,26 @@ Grithub detects:
 Generate commands once:
 
 ```bash
-grithub generate:apis
+ghit generate:apis
 ```
 
 Then use any GitHub endpoint:
 
 ```bash
 # Repositories
-grithub repos:listForAuthenticatedUser --per_page 100
+ghit repos:listForAuthenticatedUser --per_page 100
 
 # Pull Requests
-grithub pulls:list --state open
-grithub pulls:merge --pull_number 10 --merge_method squash
+ghit pulls:list --state open
+ghit pulls:merge --pull_number 10 --merge_method squash
 
 # Organizations
-grithub orgs:listForAuthenticatedUser
-grithub orgs:listMembers --org company
+ghit orgs:listForAuthenticatedUser
+ghit orgs:listMembers --org company
 
 # Users
-grithub users:getAuthenticated
-grithub users:listFollowersForAuthenticatedUser
+ghit users:getAuthenticated
+ghit users:listFollowersForAuthenticatedUser
 ```
 
 ## Use Cases
@@ -149,8 +149,8 @@ mkdir project-templates/standard
 # - Write documentation
 
 # Seed to new projects
-grithub set-repo company/new-project
-grithub issues:seed project-templates/standard
+ghit set-repo company/new-project
+ghit issues:seed project-templates/standard
 ```
 
 ### Sprint Planning
@@ -167,7 +167,7 @@ git add sprint-2024-Q1/
 git commit -m "Sprint planning"
 
 # Seed to GitHub
-grithub issues:seed sprint-2024-Q1
+ghit issues:seed sprint-2024-Q1
 ```
 
 ### Migration from Other Tools
@@ -178,7 +178,7 @@ Move issues from Jira, Linear, etc.:
 2. Convert to markdown format
 3. Seed to GitHub:
    ```bash
-   grithub issues:seed ./migrated-issues
+   ghit issues:seed ./migrated-issues
    ```
 
 ### Repository Cleanup
@@ -186,7 +186,7 @@ Move issues from Jira, Linear, etc.:
 Remove test or duplicate issues:
 
 ```bash
-grithub issues:delete --start 1 --end 50
+ghit issues:delete --start 1 --end 50
 ```
 
 ### CI/CD Integration
@@ -197,7 +197,7 @@ Automate issue creation from workflows:
 # .github/workflows/create-issue.yml
 - name: Create Issue
   run: |
-    grithub issues:create \
+    ghit issues:create \
       --title "Deploy failed" \
       --body "Build #${{ github.run_number }} failed"
   env:
@@ -217,7 +217,7 @@ cat .github/issues/*.md
 vi .github/issues/001-feature.md
 git commit -am "Update feature requirements"
 git push
-grithub issues:update .github/issues
+ghit issues:update .github/issues
 ```
 
 ## How It Works
@@ -225,7 +225,7 @@ grithub issues:update .github/issues
 ### Architecture
 
 ```md
-Grithub CLI
+Ghit CLI
 ├── Built-in Commands (TypeScript)
 │ ├── login / logout
 │ ├── config
@@ -333,7 +333,7 @@ No magic:
 
 ### vs GitHub CLI (gh)
 
-**Grithub:**
+**Ghit:**
 
 - Auto-generated commands from OpenAPI
 - Bulk issue operations
@@ -351,7 +351,7 @@ No magic:
 
 ### vs Web Interface
 
-**Grithub:**
+**Ghit:**
 
 - Bulk operations
 - Version-controlled issue templates
@@ -367,7 +367,7 @@ No magic:
 
 ### vs GitHub API Directly
 
-**Grithub:**
+**Ghit:**
 
 - No code required
 - Authentication handled
@@ -383,29 +383,29 @@ No magic:
 
 ## Getting Started
 
-Ready to try Grithub?
+Ready to try Ghit?
 
 1. **Install**
 
    ```bash
-   pnpm add -g @toneflix/grithub
+   pnpm add -g @toneflix/ghit
    ```
 
 2. **Authenticate**
 
    ```bash
-   grithub login
+   ghit login
    ```
 
 3. **Set Repository**
 
    ```bash
-   grithub set-repo owner/repo
+   ghit set-repo owner/repo
    ```
 
 4. **Start Working**
    ```bash
-   grithub issues
+   ghit issues
    ```
 
 ## Next Steps

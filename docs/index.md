@@ -2,12 +2,12 @@
 layout: home
 
 hero:
-  name: Grithub
+  name: Ghit
   text: GitHub CLI Reimagined
   tagline: Command-line toolkit that blends hand-crafted workflows with OpenAPI-generated commands for GitHub.
   image:
     src: /banner.png
-    alt: Grithub
+    alt: Ghit
   actions:
     - theme: brand
       text: Get Started
@@ -17,7 +17,7 @@ hero:
       link: /guide/quick-start
     - theme: alt
       text: View on GitHub
-      link: https://github.com/toneflix/grithub
+      link: https://github.com/toneflix/ghit
 
 features:
   - icon: 🔐

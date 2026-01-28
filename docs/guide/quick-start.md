@@ -1,21 +1,21 @@
 # Quick Start
 
-Get up and running with Grithub in under 5 minutes.
+Get up and running with Ghit in under 5 minutes.
 
 ## Install
 
 ::: code-group
 
 ```bash [pnpm]
-pnpm add -g @toneflix/grithub
+pnpm add -g @toneflix/ghit
 ```
 
 ```bash [npm]
-npm install -g @toneflix/grithub
+npm install -g @toneflix/ghit
 ```
 
 ```bash [yarn]
-yarn global add @toneflix/grithub
+yarn global add @toneflix/ghit
 ```
 
 :::
@@ -23,7 +23,7 @@ yarn global add @toneflix/grithub
 ## Authenticate
 
 ```bash
-grithub login
+ghit login
 ```
 
 Follow the browser OAuth flow to grant access.
@@ -31,7 +31,7 @@ Follow the browser OAuth flow to grant access.
 ## Set Default Repository
 
 ```bash
-grithub set-repo owner/repo
+ghit set-repo owner/repo
 ```
 
 ## Common Workflows
@@ -39,7 +39,7 @@ grithub set-repo owner/repo
 ### Browse Issues Interactively
 
 ```bash
-grithub issues
+ghit issues
 ```
 
 Navigate through issues, view details, close/reopen, edit, or delete.
@@ -47,7 +47,7 @@ Navigate through issues, view details, close/reopen, edit, or delete.
 ### Create a Single Issue
 
 ```bash
-grithub issues:create --title "Bug found" --body "Description"
+ghit issues:create --title "Bug found" --body "Description"
 ```
 
 ### Seed Multiple Issues
@@ -77,7 +77,7 @@ Add GitHub Actions workflow for automated testing.
 Then seed:
 
 ```bash
-grithub issues:seed ./issues
+ghit issues:seed ./issues
 ```
 
 ### Update Issues in Bulk
@@ -85,17 +85,17 @@ grithub issues:seed ./issues
 Modify your markdown files, then:
 
 ```bash
-grithub issues:update ./issues
+ghit issues:update ./issues
 ```
 
-Grithub uses smart diffing to update only changed content.
+Ghit uses smart diffing to update only changed content.
 
 ### Delete Issues
 
 Interactively multiselcet and delte issues
 
 ```bash
-grithub issues:delete
+ghit issues:delete
 ```
 
 ## Generated Commands
@@ -103,24 +103,24 @@ grithub issues:delete
 Generate CLI commands from GitHub's OpenAPI spec:
 
 ```bash
-grithub generate:apis
+ghit generate:apis
 ```
 
 Now use any GitHub REST endpoint:
 
 ```bash
 # List repos for authenticated user
-grithub repos:list-for-authenticated-user --per_page 100
+ghit repos:list-for-authenticated-user --per_page 100
 
 # Create a gist
-grithub gists:create --description "My snippet" --public true
+ghit gists:create --description "My snippet" --public true
 
 # Get user info
-grithub users:get-authenticated
+ghit users:get-authenticated
 ```
 
 ::: tip Command Discovery
-Run `grithub --help` to see all available commands, including generated ones and their expected options and arguments.
+Run `ghit --help` to see all available commands, including generated ones and their expected options and arguments.
 :::
 
 ## Configuration Tips
@@ -128,19 +128,19 @@ Run `grithub --help` to see all available commands, including generated ones and
 ### Check Current Config
 
 ```bash
-grithub info
+ghit info
 ```
 
 ### Enable Debug Mode
 
 ```bash
-grithub config --debug true
+ghit config --debug true
 ```
 
 ### Switch Repositories Quickly
 
 ```bash
-grithub set-repo different-owner/different-repo
+ghit set-repo different-owner/different-repo
 ```
 
 ## Next Steps

@@ -1,10 +1,10 @@
 # Configuration
 
-Customize Grithub's behavior through the interactive configuration interface or direct database access.
+Customize Ghit's behavior through the interactive configuration interface or direct database access.
 
 ## Overview
 
-Grithub stores configuration includes:
+Ghit stores configuration includes:
 
 - Debug mode
 - API settings
@@ -18,7 +18,7 @@ Grithub stores configuration includes:
 Access the interactive configuration:
 
 ```bash
-grithub config
+ghit config
 ```
 
 You'll see:
@@ -43,7 +43,7 @@ Enable or disable debug mode (Disabled)
 Enable detailed error messages and logging.
 
 ```bash
-grithub config
+ghit config
 # Select "Debug Mode"
 # Toggle enabled/disabled
 ```
@@ -89,7 +89,7 @@ Set the GitHub API base URL.
 **Example:**
 
 ```bash
-grithub config
+ghit config
 # Select "API Base URL"
 # Enter: https://github.company.com/api/v3
 ```
@@ -113,7 +113,7 @@ Set request timeout in milliseconds.
 **Example:**
 
 ```bash
-grithub config
+ghit config
 # Select "Timeout Duration"
 # Enter: 10000
 ```
@@ -139,7 +139,7 @@ Control whether to skip generating commands with many parameters.
 **Example:**
 
 ```bash
-grithub config
+ghit config
 # Select "Skip Long Command Generation"
 # Toggle enabled/disabled
 ```
@@ -151,7 +151,7 @@ Set Ngrok authentication token for webhook testing.
 **Example:**
 
 ```bash
-grithub config
+ghit config
 # Select "Ngrok Auth Token"
 # Enter your token: 2abc...
 ```
@@ -167,7 +167,7 @@ export NGROK_AUTHTOKEN="your_token_here"
 Restore all settings to defaults.
 
 ```bash
-grithub config
+ghit config
 # Select "Reset Configuration"
 # Confirm reset
 ```
@@ -191,20 +191,20 @@ Set your default repository context.
 ### Set Default Repository
 
 ```bash
-grithub set-repo owner/repository
+ghit set-repo owner/repository
 ```
 
 **Examples:**
 
 ```bash
 # Direct specification
-grithub set-repo toneflix/grithub
+ghit set-repo toneflix/ghit
 
 # Interactive selection from your repos
-grithub set-repo
+ghit set-repo
 
 # From organization repos
-grithub set-repo --org
+ghit set-repo --org
 ```
 
 ### Benefits
@@ -213,20 +213,20 @@ Once set, omit `--owner` and `--repo` flags:
 
 ```bash
 # Before (without default)
-grithub issues:create --title "Bug" --owner toneflix --repo grithub
+ghit issues:create --title "Bug" --owner toneflix --repo ghit
 
 # After (with default)
-grithub issues:create --title "Bug"
+ghit issues:create --title "Bug"
 ```
 
 ### Change Default Repository
 
 ```bash
 # Set new default
-grithub set-repo different-owner/different-repo
+ghit set-repo different-owner/different-repo
 
 # Or interactively
-grithub set-repo
+ghit set-repo
 ```
 
 ## Viewing Current Configuration
@@ -234,7 +234,7 @@ grithub set-repo
 Display all settings:
 
 ```bash
-grithub info
+ghit info
 ```
 
 Output includes:
@@ -247,7 +247,7 @@ Output includes:
 │ Platform                │ darwin                   │
 │ CPUs                    │ 8                        │
 │ Host                    │ username@Machine.host    │
-│ Database Path           │ ~/.grithub/app.db        │
+│ Database Path           │ ~/.ghit/app.db        │
 │ Github User             │ youruser (ID: xxxxxxxx)  │
 │ Default Repo            │ toneflix-forks/dummy     │
 └───────────────────────-─┴──────────────────────────┘
@@ -261,28 +261,28 @@ Override configuration via environment variables:
 
 ```bash
 export GITHUB_TOKEN="ghp_your_token_here"
-grithub issues:list
+ghit issues:list
 ```
 
 ### API Base URL
 
 ```bash
 export GITHUB_API_URL="https://github.company.com/api/v3"
-grithub issues:list
+ghit issues:list
 ```
 
 ### Ngrok Token
 
 ```bash
 export NGROK_AUTHTOKEN="your_ngrok_token"
-grithub webhook:listen
+ghit webhook:listen
 ```
 
 ### Debug Mode
 
 ```bash
-export GRITHUB_DEBUG=true
-grithub issues:create --title "Test"
+export GHIT_DEBUG=true
+ghit issues:create --title "Test"
 ```
 
 ::: tip
@@ -294,31 +294,31 @@ Environment variables take precedence over database configuration.
 All configuration is stored in SQLite:
 
 ```md
-~/.grithub/
+~/.ghit/
 └── app.db
 ```
 
 ### Backup Configuration
 
 ```bash
-cp ~/.grithub/app.db ~/.grithub/app.db.backup
+cp ~/.ghit/app.db ~/.ghit/app.db.backup
 ```
 
 ### Restore Configuration
 
 ```bash
-cp ~/.grithub/app.db.backup ~/.grithub/app.db
+cp ~/.ghit/app.db.backup ~/.ghit/app.db
 ```
 
 ### Transfer to Another Machine
 
 ```bash
 # On old machine
-cp ~/.grithub/app.db /path/to/usb/grithub-config.db
+cp ~/.ghit/app.db /path/to/usb/ghit-config.db
 
 # On new machine
-mkdir -p ~/.grithub
-cp /path/to/usb/grithub-config.db ~/.grithub/app.db
+mkdir -p ~/.ghit
+cp /path/to/usb/ghit-config.db ~/.ghit/app.db
 ```
 
 ## Common Configuration Scenarios
@@ -326,7 +326,7 @@ cp /path/to/usb/grithub-config.db ~/.grithub/app.db
 ### Development Environment
 
 ```bash
-grithub config
+ghit config
 # Enable debug mode
 # Set shorter timeout (3000ms)
 # Enable long command generation
@@ -335,7 +335,7 @@ grithub config
 ### Production/CI Environment
 
 ```bash
-grithub config
+ghit config
 # Disable debug mode
 # Set longer timeout (10000ms)
 # Skip long command generation
@@ -347,7 +347,7 @@ export GITHUB_TOKEN="$CI_SECRET_TOKEN"
 ### GitHub Enterprise
 
 ```bash
-grithub config
+ghit config
 # Set API Base URL to your GHE instance
 # Increase timeout (enterprise networks)
 # Enable debug for troubleshooting
@@ -356,7 +356,7 @@ grithub config
 ### Slow/Unstable Network
 
 ```bash
-grithub config
+ghit config
 # Increase timeout to 30000ms
 # Enable debug to see retry attempts
 ```
@@ -372,13 +372,13 @@ grithub config
 1. Check database permissions:
 
    ```bash
-   ls -la ~/.grithub/app.db
-   chmod 600 ~/.grithub/app.db
+   ls -la ~/.ghit/app.db
+   chmod 600 ~/.ghit/app.db
    ```
 
 2. Verify database isn't locked:
    ```bash
-   lsof ~/.grithub/app.db
+   lsof ~/.ghit/app.db
    ```
 
 ### Timeout Errors
@@ -388,7 +388,7 @@ grithub config
 **Solution:**
 
 ```bash
-grithub config
+ghit config
 # Increase timeout duration to 10000 or higher
 ```
 
@@ -399,7 +399,7 @@ grithub config
 **Solution:**
 
 ```bash
-grithub config
+ghit config
 # Set correct API Base URL
 # Format: https://github.company.com/api/v3
 # Enable debug mode
@@ -413,13 +413,13 @@ grithub config
 
 ```bash
 # Remove database
-rm ~/.grithub/app.db
+rm ~/.ghit/app.db
 
 # Re-login
-grithub login
+ghit login
 
 # Reconfigure
-grithub config
+ghit config
 ```
 
 ## Best Practices
@@ -430,7 +430,7 @@ grithub config
 
 ```gitignore
 # .gitignore
-.grithub/
+.ghit/
 *.db
 ```
 
@@ -441,8 +441,8 @@ grithub config
 
 ## Required Configuration
 
-1. Run `grithub login`
-2. Run `grithub set-repo owner/repo`
+1. Run `ghit login`
+2. Run `ghit set-repo owner/repo`
 3. Set debug mode if needed
 ```
 
@@ -451,12 +451,12 @@ grithub config
 For consistent team configuration:
 
 ```bash
-# scripts/setup-grithub.sh
+# scripts/setup-ghit.sh
 #!/bin/bash
 
-grithub login
-grithub set-repo company/project
-grithub config # Then manually set team standards
+ghit login
+ghit set-repo company/project
+ghit config # Then manually set team standards
 ```
 
 ### CI/CD Settings
@@ -464,15 +464,15 @@ grithub config # Then manually set team standards
 Always use environment variables in CI:
 
 ```yaml
-# .github/workflows/grithub.yml
+# .github/workflows/ghit.yml
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   GITHUB_API_URL: ${{ secrets.GHE_API_URL }}
-  GRITHUB_DEBUG: false
+  GHIT_DEBUG: false
 ```
 
 ## Next Steps
 
 - [Authentication](/guide/authentication) - Set up login
 - [Commands](/guide/commands) - Available commands
-- [Quick Start](/guide/quick-start) - Start using Grithub
+- [Quick Start](/guide/quick-start) - Start using Ghit

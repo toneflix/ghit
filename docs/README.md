@@ -1,1 +1,1 @@
-# Grithub Documentation
+# Ghit Documentation

@@ -1,23 +1,23 @@
 # Getting Started
 
-This guide will walk you through installing Grithub and setting up your first workflow.
+This guide will walk you through installing Ghit and setting up your first workflow.
 
 ## Installation
 
-Install Grithub globally using your preferred package manager:
+Install Ghit globally using your preferred package manager:
 
 ::: code-group
 
 ```bash [pnpm]
-pnpm add -g @toneflix/grithub
+pnpm add -g @toneflix/ghit
 ```
 
 ```bash [npm]
-npm install -g @toneflix/grithub
+npm install -g @toneflix/ghit
 ```
 
 ```bash [yarn]
-yarn global add @toneflix/grithub
+yarn global add @toneflix/ghit
 ```
 
 :::
@@ -29,27 +29,27 @@ yarn global add @toneflix/grithub
 Run the login command to authenticate:
 
 ```bash
-grithub login
+ghit login
 ```
 
 This will:
 
 - Open your browser to GitHub's OAuth flow
 - Request necessary permissions
-- Store your token securely in `~/.grithub/db.sqlite`
+- Store your token securely in `~/.ghit/db.sqlite`
 
 ### 2. Set a Default Repository
 
 Set a default repository to avoid typing owner/repo on every command:
 
 ```bash
-grithub set-repo owner/repository-name
+ghit set-repo owner/repository-name
 ```
 
 For example:
 
 ```bash
-grithub set-repo toneflix/grithub
+ghit set-repo toneflix/ghit
 ```
 
 ### 3. Verify Your Setup
@@ -57,7 +57,7 @@ grithub set-repo toneflix/grithub
 Check that everything is configured correctly:
 
 ```bash
-grithub info
+ghit info
 ```
 
 This displays:
@@ -73,7 +73,7 @@ This displays:
 Launch the interactive issues dashboard:
 
 ```bash
-grithub issues
+ghit issues
 ```
 
 This lets you:
@@ -89,7 +89,7 @@ This lets you:
 Create a single issue:
 
 ```bash
-grithub issues:create --title "Bug: Login fails" --body "Description here"
+ghit issues:create --title "Bug: Login fails" --body "Description here"
 ```
 
 ### Bulk Operations
@@ -97,34 +97,34 @@ grithub issues:create --title "Bug: Login fails" --body "Description here"
 Seed multiple issues from a directory of markdown files:
 
 ```bash
-grithub issues:seed ./issues-directory
+ghit issues:seed ./issues-directory
 ```
 
 Update existing issues:
 
 ```bash
-grithub issues:update ./issues-directory
+ghit issues:update ./issues-directory
 ```
 
 Delete multiple issues:
 
 ```bash
-grithub issues:delete --start 1 --end 50
+ghit issues:delete --start 1 --end 50
 ```
 
 ## Generated API Commands
 
-Grithub can generate commands directly from GitHub's OpenAPI specification.
+Ghit can generate commands directly from GitHub's OpenAPI specification.
 
 ### Generate Commands
 
 Run the generator once:
 
 ```bash
-grithub generate:apis
+ghit generate:apis
 ```
 
-This creates `.grithub/apis.generated.js` containing all GitHub REST API endpoints as CLI commands.
+This creates `.ghit/apis.generated.js` containing all GitHub REST API endpoints as CLI commands.
 
 ### Using Generated Commands
 
@@ -132,20 +132,20 @@ Once generated, use any GitHub API endpoint as a command:
 
 ```bash
 # Create an issue
-grithub issues:create --title "New feature" --owner org --repo repo
+ghit issues:create --title "New feature" --owner org --repo repo
 
 # List repository issues
-grithub issues:list --owner org --repo repo --state open
+ghit issues:list --owner org --repo repo --state open
 
 # Get a specific issue
-grithub issues:get --owner org --repo repo --issue_number 42
+ghit issues:get --owner org --repo repo --issue_number 42
 
 # List organizations
-grithub orgs:list-for-authenticated-user --per_page 50
+ghit orgs:list-for-authenticated-user --per_page 50
 ```
 
 ::: tip
-The generated file is ignored by git (add `.grithub/` to `.gitignore`). Regenerate when GitHub's API updates.
+The generated file is ignored by git (add `.ghit/` to `.gitignore`). Regenerate when GitHub's API updates.
 :::
 
 ## Configuration
@@ -153,7 +153,7 @@ The generated file is ignored by git (add `.grithub/` to `.gitignore`). Regenera
 View or modify configuration:
 
 ```bash
-grithub config
+ghit config
 ```
 
 Available options:

@@ -1,10 +1,10 @@
 # Commands
 
-Complete reference of all built-in Grithub commands.
+Complete reference of all built-in Ghit commands.
 
 ## Overview
 
-Grithub commands are organized into categories:
+Ghit commands are organized into categories:
 
 - **Authentication** - Login, logout
 - **Configuration** - Settings and preferences
@@ -18,7 +18,7 @@ Grithub commands are organized into categories:
 All commands follow this pattern:
 
 ```bash
-grithub <command> [arguments] [options]
+ghit <command> [arguments] [options]
 ```
 
 ### Get Help
@@ -26,15 +26,15 @@ grithub <command> [arguments] [options]
 For any command:
 
 ```bash
-grithub <command> --help
-grithub <command> -h
+ghit <command> --help
+ghit <command> -h
 ```
 
 List all commands:
 
 ```bash
-grithub --help
-grithub help
+ghit --help
+ghit help
 ```
 
 ## Authentication Commands
@@ -44,7 +44,7 @@ grithub help
 Authenticate with GitHub via OAuth.
 
 ```bash
-grithub login
+ghit login
 ```
 
 **What it does:**
@@ -56,7 +56,7 @@ grithub login
 **Example:**
 
 ```bash
-$ grithub login
+$ ghit login
 ✓ Authentication successful
 ? Select default repository
 ❯ username/repo-1
@@ -69,7 +69,7 @@ $ grithub login
 Clear local authentication.
 
 ```bash
-grithub logout
+ghit logout
 ```
 
 **What it does:**
@@ -81,7 +81,7 @@ grithub logout
 **Example:**
 
 ```bash
-$ grithub logout
+$ ghit logout
 ⠋ Logging out...
 ✓ Logged out successfully
 ```
@@ -90,10 +90,10 @@ $ grithub logout
 
 ### config
 
-Configure Grithub settings interactively.
+Configure Ghit settings interactively.
 
 ```bash
-grithub config
+ghit config
 ```
 
 **Options:**
@@ -108,7 +108,7 @@ grithub config
 **Example:**
 
 ```bash
-$ grithub config
+$ ghit config
 ? Select configuration to set
 ❯ Debug Mode (Disabled)
   API Base URL (https://api.github.com)
@@ -120,7 +120,7 @@ $ grithub config
 Set default repository context.
 
 ```bash
-grithub set-repo [name] [options]
+ghit set-repo [name] [options]
 ```
 
 **Arguments:**
@@ -135,13 +135,13 @@ grithub set-repo [name] [options]
 
 ```bash
 # Direct specification
-grithub set-repo toneflix/grithub
+ghit set-repo toneflix/ghit
 
 # Interactive selection
-grithub set-repo
+ghit set-repo
 
 # From organization
-grithub set-repo --org
+ghit set-repo --org
 ```
 
 ## Information Commands
@@ -151,7 +151,7 @@ grithub set-repo --org
 Display application and system information.
 
 ```bash
-grithub info
+ghit info
 ```
 
 **Output includes:**
@@ -166,7 +166,7 @@ grithub info
 **Example:**
 
 ```bash
-$ grithub info
+$ ghit info
 ✓ Application Information Loaded.
 
 ┌─────────────────────-───┬──────────────────────────┐
@@ -188,7 +188,7 @@ $ grithub info
 Interactive issues management dashboard.
 
 ```bash
-grithub issues [repo]
+ghit issues [repo]
 ```
 
 **Arguments:**
@@ -206,7 +206,7 @@ grithub issues [repo]
 **Example:**
 
 ```bash
-$ grithub issues
+$ ghit issues
 ✓ 15 issues fetched successfully.
 
 ? Select Issue
@@ -221,7 +221,7 @@ $ grithub issues
 Create a single issue (generated command).
 
 ```bash
-grithub issues:create --title <title> [options]
+ghit issues:create --title <title> [options]
 ```
 
 **Options:**
@@ -236,7 +236,7 @@ grithub issues:create --title <title> [options]
 **Example:**
 
 ```bash
-grithub issues:create \
+ghit issues:create \
   --title "Add dark mode" \
   --body "Users requested dark mode" \
   --labels "enhancement,ui"
@@ -247,7 +247,7 @@ grithub issues:create \
 Create multiple issues from markdown files.
 
 ```bash
-grithub issues:seed <directory> [options]
+ghit issues:seed <directory> [options]
 ```
 
 **Arguments:**
@@ -261,7 +261,7 @@ grithub issues:seed <directory> [options]
 **Example:**
 
 ```bash
-grithub issues:seed ./my-issues
+ghit issues:seed ./my-issues
 ```
 
 ### issues:update
@@ -269,7 +269,7 @@ grithub issues:seed ./my-issues
 Update issues from modified markdown files.
 
 ```bash
-grithub issues:update <directory> [options]
+ghit issues:update <directory> [options]
 ```
 
 **Arguments:**
@@ -283,7 +283,7 @@ grithub issues:update <directory> [options]
 **Example:**
 
 ```bash
-grithub issues:update ./my-issues
+ghit issues:update ./my-issues
 ```
 
 ### issues:delete
@@ -291,7 +291,7 @@ grithub issues:update ./my-issues
 Delete a range of issues.
 
 ```bash
-grithub issues:delete --start <number> --end <number> [options]
+ghit issues:delete --start <number> --end <number> [options]
 ```
 
 **Options:**
@@ -303,7 +303,7 @@ grithub issues:delete --start <number> --end <number> [options]
 **Example:**
 
 ```bash
-grithub issues:delete --start 1 --end 50
+ghit issues:delete --start 1 --end 50
 ```
 
 ::: danger
@@ -317,7 +317,7 @@ Issue deletion is permanent and cannot be undone.
 Generate CLI commands from GitHub OpenAPI spec.
 
 ```bash
-grithub generate:apis
+ghit generate:apis
 ```
 
 **What it does:**
@@ -325,15 +325,15 @@ grithub generate:apis
 1. Downloads GitHub OpenAPI specification
 2. Parses endpoint definitions
 3. Generates command signatures
-4. Writes to `.grithub/apis.generated.js` in your current working directory.
+4. Writes to `.ghit/apis.generated.js` in your current working directory.
 
 **Example:**
 
 ```bash
-$ grithub generate:apis
+$ ghit generate:apis
 ✓ @octokit/openapi is already installed.
 ⠋ Generating Extended APIs...
-✓ Generated Extended APIs to: .grithub/apis.generated.js
+✓ Generated Extended APIs to: .ghit/apis.generated.js
 ```
 
 **Generated commands available after running:**
@@ -350,29 +350,29 @@ After running `generate:apis`, hundreds of commands become available:
 
 ```bash
 # List issues
-grithub issues:list-for-repo --state open
+ghit issues:list-for-repo --state open
 
 # Get issue
-grithub issues:get --issue_number 42
+ghit issues:get --issue_number 42
 
 # Update issue
-grithub issues:update --issue_number 42 --state closed
+ghit issues:update --issue_number 42 --state closed
 
 # Add labels
-grithub issues:addLabels --issue_number 42 --labels "bug,priority"
+ghit issues:addLabels --issue_number 42 --labels "bug,priority"
 ```
 
 ### Repositories (Generated)
 
 ```bash
 # List repos
-grithub repos:list-for-authenticated-user --per_page 100
+ghit repos:list-for-authenticated-user --per_page 100
 
 # Get repo
-grithub repos:get --owner toneflix --repo grithub
+ghit repos:get --owner toneflix --repo ghit
 
 # Create repo
-grithub repos:create-for-authenticated-user \
+ghit repos:create-for-authenticated-user \
   --name "new-repo" \
   --private false
 ```
@@ -381,45 +381,45 @@ grithub repos:create-for-authenticated-user \
 
 ```bash
 # List PRs
-grithub pulls:list --state open
+ghit pulls:list --state open
 
 # Get PR
-grithub pulls:get --pull_number 10
+ghit pulls:get --pull_number 10
 
 # Create PR
-grithub pulls:create \
+ghit pulls:create \
   --title "Fix bug" \
   --head "feature" \
   --base "main"
 
 # Merge PR
-grithub pulls:merge --pull_number 10 --merge_method squash
+ghit pulls:merge --pull_number 10 --merge_method squash
 ```
 
 ### Organizations (Generated)
 
 ```bash
 # List orgs
-grithub orgs:list-for-authenticated-user
+ghit orgs:list-for-authenticated-user
 
 # Get org
-grithub orgs:get --org toneflix
+ghit orgs:get --org toneflix
 
 # List members
-grithub orgs:listMembers --org toneflix
+ghit orgs:listMembers --org toneflix
 ```
 
 ### Users (Generated)
 
 ```bash
 # Get authenticated user
-grithub users:get-authenticated
+ghit users:get-authenticated
 
 # Get user
-grithub users:getByUsername --username toneflix
+ghit users:getByUsername --username toneflix
 
 # List followers
-grithub users:listFollowersForAuthenticatedUser
+ghit users:listFollowersForAuthenticatedUser
 ```
 
 ## Command Patterns
@@ -430,27 +430,27 @@ After setting default repository:
 
 ```bash
 # Set default
-grithub set-repo owner/repo
+ghit set-repo owner/repo
 
 # Now these work without --owner/--repo
-grithub issues:create --title "Bug"
-grithub issues:list-for-repo --state open
-grithub pulls:list
+ghit issues:create --title "Bug"
+ghit issues:list-for-repo --state open
+ghit pulls:list
 ```
 
 ### Piping and Scripting
 
 ```bash
 # Export to file
-grithub issues:list-for-repo > issues.json
+ghit issues:list-for-repo > issues.json
 
 # Use with jq
-grithub issues:list-for-repo | jq '.[] | .title'
+ghit issues:list-for-repo | jq '.[] | .title'
 
 # In scripts
 #!/bin/bash
 for title in "Task 1" "Task 2"; do
-  grithub issues:create --title "$title"
+  ghit issues:create --title "$title"
 done
 ```
 
@@ -458,9 +458,9 @@ done
 
 ```bash
 # Setup and use
-grithub login && \
-grithub set-repo owner/repo && \
-grithub issues:seed ./issues
+ghit login && \
+ghit set-repo owner/repo && \
+ghit issues:seed ./issues
 ```
 
 ## Global Options
@@ -470,20 +470,20 @@ Available on all commands:
 ### Help
 
 ```bash
-grithub <command> --help
-grithub <command> -h
+ghit <command> --help
+ghit <command> -h
 ```
 
 ### Version
 
 ```bash
-grithub --version
-grithub -V
+ghit --version
+ghit -V
 ```
 
 ## Exit Codes
 
-Grithub uses standard exit codes:
+Ghit uses standard exit codes:
 
 - `0` - Success
 - `1` - General error
@@ -494,7 +494,7 @@ Grithub uses standard exit codes:
 
 ```bash
 #!/bin/bash
-grithub issues:create --title "Bug"
+ghit issues:create --title "Bug"
 if [ $? -eq 0 ]; then
   echo "Issue created successfully"
 else
@@ -509,10 +509,10 @@ Some commands have shorter aliases:
 
 ```bash
 # issues:list-for-repo can use alias
-grithub issues:list
+ghit issues:list
 
 # issues:get has alias
-grithub issues:get
+ghit issues:get
 ```
 
 ## Tips and Tricks
@@ -523,9 +523,9 @@ Create shortcuts:
 
 ```bash
 # Add to ~/.bashrc or ~/.zshrc
-alias gi='grithub issues'
-alias gic='grithub issues:create'
-alias gil='grithub issues:list-for-repo'
+alias gi='ghit issues'
+alias gic='ghit issues:create'
+alias gil='ghit issues:list-for-repo'
 
 # Usage
 gi  # Opens interactive dashboard
@@ -539,13 +539,13 @@ Use shell history effectively:
 
 ```bash
 # Search history
-Ctrl+R grithub
+Ctrl+R ghit
 
-# Repeat last grithub command
-!grithub
+# Repeat last ghit command
+!ghit
 
 # Edit and repeat
-grithub issues:create --title "Bug 1"
+ghit issues:create --title "Bug 1"
 # Press Up, change "1" to "2", Enter
 ```
 
@@ -554,8 +554,8 @@ grithub issues:create --title "Bug 1"
 Enable tab completion (if supported):
 
 ```bash
-grithub iss<Tab>  # Completes to "issues"
-grithub issues:cr<Tab>  # Completes to "issues:create"
+ghit iss<Tab>  # Completes to "issues"
+ghit issues:cr<Tab>  # Completes to "issues:create"
 ```
 
 ## Troubleshooting Commands
@@ -563,17 +563,17 @@ grithub issues:cr<Tab>  # Completes to "issues:create"
 ### Command Not Found
 
 ```bash
-command not found: grithub
+command not found: ghit
 ```
 
 **Solution:**
 
 ```bash
 # Reinstall globally
-npm install -g @toneflix/grithub
+npm install -g @toneflix/ghit
 
 # Or use npx
-npx @toneflix/grithub <command>
+npx @toneflix/ghit <command>
 ```
 
 ### Permission Denied
@@ -585,7 +585,7 @@ ERROR: You're not signed in
 **Solution:**
 
 ```bash
-grithub login
+ghit login
 ```
 
 ### Invalid Arguments
@@ -598,10 +598,10 @@ ERROR: Missing required argument: title
 
 ```bash
 # Check required parameters
-grithub <command> --help
+ghit <command> --help
 
 # Provide required arguments
-grithub issues:create --title "My Issue"
+ghit issues:create --title "My Issue"
 ```
 
 ## Next Steps

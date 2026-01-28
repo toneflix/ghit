@@ -1,6 +1,6 @@
 # Contributing
 
-Thank you for considering contributing to Grithub! This guide will help you get started.
+Thank you for considering contributing to Ghit! This guide will help you get started.
 
 ## Code of Conduct
 
@@ -12,7 +12,7 @@ There are many ways to contribute:
 
 ### Report Bugs
 
-Found a bug? [Open an issue](https://github.com/toneflix/grithub/issues/new) with:
+Found a bug? [Open an issue](https://github.com/toneflix/ghit/issues/new) with:
 
 - Clear title and description
 - Steps to reproduce
@@ -27,8 +27,8 @@ Found a bug? [Open an issue](https://github.com/toneflix/grithub/issues/new) wit
 
 **Steps to reproduce:**
 
-1. Run `grithub login`
-2. Run `grithub issues`
+1. Run `ghit login`
+2. Run `ghit issues`
 3. See error: "Authentication failed"
 
 **Expected:** Should show list of issues
@@ -37,12 +37,12 @@ Found a bug? [Open an issue](https://github.com/toneflix/grithub/issues/new) wit
 
 - OS: macOS 14.2
 - Node: 18.19.0
-- Grithub: 0.1.6
+- Ghit: 0.1.6
 ```
 
 ### Suggest Features
 
-Have an idea? [Open a feature request](https://github.com/toneflix/grithub/issues/new) with:
+Have an idea? [Open a feature request](https://github.com/toneflix/ghit/issues/new) with:
 
 - Clear use case
 - Proposed solution
@@ -58,7 +58,7 @@ Have an idea? [Open a feature request](https://github.com/toneflix/grithub/issue
 
 **Proposed solution:**
 
-- Add `grithub discussions` command
+- Add `ghit discussions` command
 - Support CRUD operations
 - Enable bulk operations
 
@@ -99,19 +99,19 @@ Ready to code? Follow this workflow:
 
 ### 1. Fork Repository
 
-Click "Fork" on [GitHub](https://github.com/toneflix/grithub)
+Click "Fork" on [GitHub](https://github.com/toneflix/ghit)
 
 ### 2. Clone Your Fork
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/grithub.git
-cd grithub
+git clone https://github.com/YOUR_USERNAME/ghit.git
+cd ghit
 ```
 
 ### 3. Add Upstream Remote
 
 ```bash
-git remote add upstream https://github.com/toneflix/grithub.git
+git remote add upstream https://github.com/toneflix/ghit.git
 ```
 
 ### 4. Create Branch
@@ -147,7 +147,7 @@ export class MyCommand extends Command {
   protected description = 'My new command';
 
   async handle() {
-    this.info('Hello, Grithub!');
+    this.info('Hello, Ghit!');
   }
 }
 ```
@@ -431,13 +431,13 @@ Don't hesitate to ask questions!
 
 ### Questions
 
-- Open a [Discussion](https://github.com/toneflix/grithub/discussions)
-- Ask in [Issues](https://github.com/toneflix/grithub/issues)
+- Open a [Discussion](https://github.com/toneflix/ghit/discussions)
+- Ask in [Issues](https://github.com/toneflix/ghit/issues)
 
 ### Stuck?
 
 - Review [Development Guide](/guide/development)
-- Check existing [Pull Requests](https://github.com/toneflix/grithub/pulls)
+- Check existing [Pull Requests](https://github.com/toneflix/ghit/pulls)
 - Read [GitHub Docs](https://docs.github.com/en/rest)
 
 ## License
@@ -452,10 +452,10 @@ Contributors are recognized:
 - In changelog
 - On GitHub contributors page
 
-Thank you for contributing to Grithub! 🎉
+Thank you for contributing to Ghit! 🎉
 
 ## Next Steps
 
 - [Development Guide](/guide/development) - Set up development environment
 - [Commands](/guide/commands) - Learn command structure
-- [GitHub Issues](https://github.com/toneflix/grithub/issues) - Find issues to work on
+- [GitHub Issues](https://github.com/toneflix/ghit/issues) - Find issues to work on
