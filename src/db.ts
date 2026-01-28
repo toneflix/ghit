@@ -173,5 +173,5 @@ export function read<G = any> (key: string, defaultValue?: G): G {
 
     } catch { /** */ }
 
-    return defaultValue as G
+    return defaultValue ?? null as G
 } 
