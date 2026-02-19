@@ -60,7 +60,7 @@
         "@octokit/oauth-methods": "^6.0.2",
         "@octokit/openapi": "^22.0.0",
         "@octokit/rest": "^22.0.1",
-        "axios": "^1.13.2",
+        "axios": "^1.13.5",
         "better-sqlite3": "^12.6.2",
         "cli-table3": "^0.6.5",
         "dotenv": "^17.2.3",

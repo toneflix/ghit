@@ -1,5 +1,6 @@
 # Ghit
-
+ 
+[![NPM Downloads](https://img.shields.io/npm/dt/ghit.svg)](https://www.npmjs.com/package/ghit)
 [![npm version](https://img.shields.io/npm/v/ghit.svg)](https://www.npmjs.com/package/ghit)
 [![License](https://img.shields.io/npm/l/ghit.svg)](https://github.com/toneflix/ghit/blob/main/LICENSE)
 [![CI](https://github.com/toneflix/ghit/actions/workflows/ci.yml/badge.svg)](https://github.com/toneflix/ghit/actions/workflows/ci.yml)
