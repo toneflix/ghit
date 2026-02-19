@@ -310,6 +310,33 @@ ghit issues:delete --start 1 --end 50
 Issue deletion is permanent and cannot be undone.
 :::
 
+### issues:download
+
+Download issues from a specified repository.
+
+```bash
+ghit issues:download <owner/repo> <target-directory> [options]
+```
+
+**Options:**
+
+- `--labeled` Comma-separated list of labels to filter issues by. Only issues with at least one of these labels will be downloaded.
+- `--dry-run` Simulate the download without actually saving issues
+
+### issues:clone
+
+Clone issues from a specified repository to the default repository or a custom one.
+
+```bash
+ghit issues:clone <owner/repo> <target-repo> [options]
+```
+
+**Options:**
+
+- `--labeled` Comma-separated list of labels to filter issues by. Only issues with at least one of these labels will be cloned.
+- `--dry-run` Simulate the cloning without actually cloning issues.
+- `--labels` Comma-separated list of labels to add to cloned issues. If not provided, original labels will be retained.
+
 ## Generation Commands
 
 ### generate:apis

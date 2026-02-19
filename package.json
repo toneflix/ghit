@@ -40,7 +40,7 @@
         "quick:test": "pnpm vitest",
         "test": "pnpm run quick:test",
         "lint": "eslint . --ext .ts --ext .js",
-        "runner": "tsx --experimental-specifier-resolution=node src/cli.ts",
+        "cmd": "tsx --experimental-specifier-resolution=node src/cli.ts",
         "build": "tsdown",
         "dummy": "node ./tests/test.sever.js",
         "version": "pnpm run build",

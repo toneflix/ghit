@@ -3,6 +3,7 @@ import { useCommand, useOctokit } from 'src/hooks'
 
 import { Command } from '@h3ravel/musket'
 import { Logger } from '@h3ravel/shared'
+import { extractRepoInfo } from 'src/helpers'
 
 export class SetRepoCommand extends Command {
     protected signature = `set-repo 
@@ -21,9 +22,10 @@ export class SetRepoCommand extends Command {
             return void this.error('ERROR: You must be logged in to set a default repository.')
 
         if (this.argument('name')) {
+            const [ownerName, repoName] = extractRepoInfo(this.argument('name'));
             ({ data: repo } = await useOctokit().rest.repos.get({
-                owner: this.argument('name').split('/')[0],
-                repo: this.argument('name').split('/')[1],
+                owner: ownerName,
+                repo: repoName,
             }))
         } else {
 

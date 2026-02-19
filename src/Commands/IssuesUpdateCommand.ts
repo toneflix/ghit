@@ -15,6 +15,7 @@ export class IssuesUpdateCommand extends Command {
         {directory=issues : The directory containing issue files to seed from.}
         {--r|repo? : The repository to seed issues into. If not provided, the default repository will be used.}
         {--dry-run : Simulate the deletion without actually deleting issues.}
+        {--m|match=file : Matching strategy for existing issues. "title" matches issues by title, while "file" matches issues based on the file path derived from the issue body. : [title,file]}
     `
 
     protected description = 'Seed the database with updated issues from a preset directory.'
@@ -52,8 +53,13 @@ export class IssuesUpdateCommand extends Command {
 
             const existingIssues = await seeder.fetchExistingIssues(...usernameRepo, 'all')
 
-            // Create a set of existing issue titles for quick lookup
-            const existingIssuePaths = new Set(existingIssues.map(i => seeder.getFilePath(i.body ?? '')))
+            // Determine matching strategy
+            const matchStrategy = this.option('match', 'file')
+
+            // Create a set of existing issue identifiers for quick lookup
+            const existingIssueIdentifiers = new Set(
+                existingIssues.map(i => matchStrategy === 'file' ? seeder.getFilePath(i.body ?? '') : i.title)
+            )
 
             // Process each issue file
             const issues = issueFiles.map(seeder.processIssueFile.bind(seeder)).filter(Boolean)
@@ -63,8 +69,8 @@ export class IssuesUpdateCommand extends Command {
             const toUpdate: { issue: IIssueFile, existingIssue: IIssue }[] = []
 
             issues.forEach(issue => {
-                if (existingIssuePaths.has(issue.filePath)) {
-                    const existingIssue = existingIssues.find(ei => seeder.getFilePath(ei.body ?? '') === issue.filePath)!
+                if (existingIssueIdentifiers.has(matchStrategy === 'file' ? issue.filePath : issue.title)) {
+                    const existingIssue = existingIssues.find(ei => matchStrategy === 'file' ? seeder.getFilePath(ei.body ?? '') === issue.filePath : ei.title === issue.title)!
                     toUpdate.push({ issue, existingIssue })
                 } else {
                     toSkip.push(issue)

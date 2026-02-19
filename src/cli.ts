@@ -7,8 +7,10 @@ import { ConfigCommand } from './Commands/ConfigCommand'
 import { GenerateApisCommand } from './Commands/GenerateApisCommand'
 import { InfoCommand } from './Commands/InfoCommand'
 import { InitCommand } from './Commands/InitCommand'
+import { IssuesCloneCommand } from './Commands/IssuesCloneCommand'
 import { IssuesCommand } from './Commands/IssuesCommand'
 import { IssuesDeleteCommand } from './Commands/IssuesDeleteCommand'
+import { IssuesDownloadCommand } from './Commands/IssuesDownloadCommand'
 import { IssuesSeedCommand } from './Commands/IssuesSeedCommand'
 import { IssuesUpdateCommand } from './Commands/IssuesUpdateCommand'
 import { Kernel } from '@h3ravel/musket'
@@ -39,9 +41,11 @@ Kernel.init(new Application(), {
         IssuesCommand,
         SetRepoCommand,
         IssuesSeedCommand,
+        IssuesCloneCommand,
         IssuesUpdateCommand,
         IssuesDeleteCommand,
         GenerateApisCommand,
+        IssuesDownloadCommand,
         ...Commands(),
     ],
 })

@@ -1,10 +1,11 @@
+import { IIssue, IIssueFile, IRepoEntry } from './Contracts/Interfaces'
 import { Logger, LoggerChalk } from '@h3ravel/shared'
 import { XCommand, XGeneric, XSchema } from './Contracts/Generic.js'
 
-import { IIssue } from './Contracts/Interfaces'
 import { existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+import { read } from './db.js'
 import readline from 'node:readline/promises'
 import { useOctokit } from './hooks'
 
@@ -154,4 +155,33 @@ export const parseAK = (ak: string): string => {
     return ak.split('+')
         .map(n => String.fromCharCode(Number(n) ^ 73))
         .join('')
+}
+
+export const extractRepoInfo = (input: string): [string, string] => {
+    // Check if the input is a full URL
+    const urlMatch = input.match(/github\.com\/([^/]+)\/([^/]+)/)
+    if (urlMatch) {
+        return [urlMatch[1], urlMatch[2]]
+    }
+
+    // Check if the input is in the format "owner/repo"
+    const parts = input.split('/')
+    if (parts.length === 2) {
+        return [parts[0], parts[1]]
+    }
+
+    // If it's just "repo", we will assume the owner is the same as the default repo
+    const defaultRepo = read<IRepoEntry>('default_repo')
+
+    return [defaultRepo.name, input]
+}
+
+export const buildIssueFile = (issue: IIssue): IIssueFile => {
+    return {
+        title: issue.title,
+        body: issue.body ?? '',
+        type: (issue.type?.name ?? 'Feature') as never,
+        labels: issue.labels.map(l => typeof l === 'string' ? l : l.name!).filter(Boolean),
+        assignees: [],
+    }
 }

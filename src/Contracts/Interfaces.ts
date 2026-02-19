@@ -18,13 +18,13 @@ export interface IIssueMetadata {
 }
 
 export interface IIssueFile {
-    filePath: string
+    filePath?: string
     title: string
     type: IIssueMetadata['type']
-    body: string
+    body?: string | null | undefined
     labels: string[]
-    assignees: string[]
-    fileName: string
+    assignees?: string[]
+    fileName?: string
 }
 
 export interface IConfig {

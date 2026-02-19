@@ -107,11 +107,15 @@ export class IssuesSeeder {
      */
     async updateIssue (entry: IIssueFile, issue: IIssue, owner: string, repo: string): Promise<IIssue> {
         try {
+            const body = entry.filePath
+                ? this.setFilePath(entry.body ?? '', entry.filePath)
+                : entry.body ?? ''
+
             const { data } = await useOctokit().issues.update({
+                body,
                 repo,
                 owner,
                 issue_number: issue.number,
-                body: this.setFilePath(entry.body, entry.filePath),
                 title: entry.title,
                 labels: entry.labels || [],
                 assignees: entry.assignees || []
@@ -133,11 +137,15 @@ export class IssuesSeeder {
      */
     async createIssue (entry: IIssueFile, owner: string, repo: string): Promise<IIssue> {
         try {
+            const body = entry.filePath
+                ? this.setFilePath(entry.body ?? '', entry.filePath)
+                : entry.body ?? ''
+
             const { data } = await useOctokit().issues.create({
+                body,
                 repo,
                 owner,
                 type: entry.type,
-                body: this.setFilePath(entry.body, entry.filePath),
                 title: entry.title,
                 labels: entry.labels || [],
                 assignees: entry.assignees || []
@@ -246,31 +254,32 @@ export class IssuesSeeder {
     async validateAccess (owner: string, repo: string) {
         const spinner = this.command.spinner('Checking GitHub access...').start()
         try {
-            return await useOctokit().repos.get({ owner, repo })
+            const result = await useOctokit().repos.get({ owner, repo })
+            spinner.succeed('GitHub access validated successfully.')
+
+            return result
         } catch (error: any) {
             spinner.stop()
             let message: string = ''
 
+            spinner.fail(`GitHub access validation failed: ${error.message}.`)
+
             if (error.status === 404) {
                 message =
-                    `ERROR: ${error.message}\n\n` +
                     'This usually means:\n' +
                     '  1. No internet connection\n' +
                     '  2. DNS server issues\n' +
-                    '  3. Firewall/proxy blocking DNS\n\n' +
+                    '  3. Firewall/proxy blocking DNS\n' +
+                    '  4. The repository does not exist\n' +
+                    '  5. You do not have access to the repository\n\n' +
                     'Troubleshooting:\n' +
                     '  - Check your internet connection\n' +
                     '  - Try opening https://github.com in your browser\n' +
                     '  - If behind a corporate firewall, check proxy settings\n' +
-                    '  - Try using a different DNS (e.g., 8.8.8.8)\n\n' +
-                    `Original error: ${error.message}`
-            } else {
-                message = `ERROR: GitHub access validation failed: ${error.message}`
+                    '  - Try using a different DNS (e.g., 8.8.8.8)\n' +
+                    '  - Verify the repository name and owner are correct\n'
             }
-
             throw new Error(message)
-        } finally {
-            spinner.succeed('GitHub access validated successfully.')
         }
     }
 
