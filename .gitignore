@@ -152,3 +152,5 @@ docs/.vitepress/cache
 apis.generated.ts
 apis.generated.js
 .ghit
+tests/issues/*
+!tests/issues/*.md
