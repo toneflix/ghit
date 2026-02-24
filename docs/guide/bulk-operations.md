@@ -78,6 +78,38 @@ This will:
 ghit issues:seed ./issues --repo owner/repository
 ```
 
+### With Single Markdown Issues File
+
+```bash
+ghit issues:seed ./issues --file setup-ci-pipeline.md
+```
+
+When using a single file, each issue should be separated by `++++++` or `======` lines.
+
+```txt
+---
+title: Bug: Login Fails
+labels: bug, auth
+type: Bug
+---
+
+## Description
+
+Login fails for users with special characters in their password.
+
+++++++
+
+---
+title: Feature: Export Data
+labels: feature, data
+type: Feature
+---
+
+## Description
+
+Allow users to export their data in CSV format.
+```
+
 ### Example Output
 
 ```sh

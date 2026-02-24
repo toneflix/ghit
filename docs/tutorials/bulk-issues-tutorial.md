@@ -21,16 +21,16 @@ pnpm cmd issues:seed issues/
 
 **Example Directory Structure:**
 
-```txt
+```md
 issues/
-  001-feature-request.md
-  002-bug-report.md
-  003-enhancement.md
+├── 001-feature-request.md
+├── 002-bug-report.md
+├── 003-enhancement.md
 ```
 
 **Example Issue File:**
 
-```markdown
+```md
 ---
 title: Feature Request: Add Dark Mode
 labels: enhancement, ui
