@@ -37,54 +37,74 @@ export default defineConfig({
             { text: 'npm', link: 'https://www.npmjs.com/package/ghit' }
         ],
 
-        sidebar: {
-            '/guide/': [
-                {
-                    text: 'Introduction',
-                    items: [
-                        { text: 'What is Ghit?', link: '/guide/what-is-ghit' },
-                        { text: 'Getting Started', link: '/guide/getting-started' },
-                        { text: 'Quick Start', link: '/guide/quick-start' }
-                    ]
-                },
-                {
-                    text: 'Core Concepts',
-                    items: [
-                        { text: 'Authentication', link: '/guide/authentication' },
-                        { text: 'Configuration', link: '/guide/configuration' },
-                        { text: 'Commands', link: '/guide/commands' }
-                    ]
-                },
-                {
-                    text: 'Features',
-                    items: [
-                        { text: 'Bulk Operations', link: '/guide/bulk-operations' },
-                    ]
-                },
-                {
-                    text: 'Advanced',
-                    items: [
-                        { text: 'Development', link: '/guide/development' },
-                        // { text: 'Troubleshooting', link: '/guide/troubleshooting' },
-                        { text: 'Contributing', link: '/guide/contributing' }
-                    ]
-                }
-            ],
-            '/api/': [
-                {
-                    text: 'Core Commands',
-                    items: [
-                        { text: 'Issues', link: '/api/issues' }
-                    ]
-                },
-                {
-                    text: 'Generated Commands',
-                    items: [
-                        { text: 'Using Generated APIs', link: '/api/generated' }
-                    ]
-                }
-            ]
-        },
+        sidebar: [
+            {
+                text: 'Introduction',
+                items: [
+                    { text: 'What is Ghit?', link: '/guide/what-is-ghit' },
+                    { text: 'Getting Started', link: '/guide/getting-started' },
+                    { text: 'Quick Start', link: '/guide/quick-start' }
+                ]
+            },
+            {
+                text: 'Core Concepts',
+                items: [
+                    { text: 'Authentication', link: '/guide/authentication' },
+                    { text: 'Configuration', link: '/guide/configuration' },
+                    { text: 'Commands', link: '/guide/commands' }
+                ]
+            },
+            {
+                text: 'Features',
+                items: [
+                    { text: 'Bulk Operations', link: '/guide/bulk-operations' },
+                ]
+            },
+            {
+                text: 'Advanced',
+                items: [
+                    { text: 'Development', link: '/guide/development' },
+                    // { text: 'Troubleshooting', link: '/guide/troubleshooting' },
+                    { text: 'Contributing', link: '/guide/contributing' }
+                ]
+            },
+            {
+                text: 'API Reference',
+                items: [
+                    { text: 'Core Commands', link: '/api/issues' },
+                    { text: 'Using Generated APIs', link: '/api/generated' }
+                ]
+            },
+            {
+                text: 'Tutorials',
+                items: [
+                    { text: 'Bulk Issues Tutorial', link: '/tutorials/bulk-issues-tutorial' }
+                ]
+            }
+        ],
+        // '/api/': [
+        //     {
+        //         text: 'Core Commands',
+        //         items: [
+        //             { text: 'Issues', link: '/api/issues' }
+        //         ]
+        //     },
+        //     {
+        //         text: 'Generated Commands',
+        //         items: [
+        //             { text: 'Using Generated APIs', link: '/api/generated' }
+        //         ]
+        //     }
+        // ],
+        // '/tutorials/': [
+        //     {
+        //         text: 'Bulk Issues Tutorial',
+        //         items: [
+        //             { text: 'Bulk Issues Tutorial', link: '/tutorials/bulk-issues-tutorial' }
+        //         ]
+        //     }
+        // ]
+        // ],
 
         socialLinks: [
             { icon: 'github', link: 'https://github.com/toneflix/ghit' }
