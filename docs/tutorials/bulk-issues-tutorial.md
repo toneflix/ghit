@@ -21,7 +21,7 @@ pnpm cmd issues:seed issues/
 
 **Example Directory Structure:**
 
-```
+```txt
 issues/
   001-feature-request.md
   002-bug-report.md
