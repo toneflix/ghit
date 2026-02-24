@@ -194,21 +194,15 @@ export class IssuesSeeder {
     }
 
     /**
-     * Process a single issue file
+     * Prepare issue data from file content and metadata
      * 
-     * @param filePath 
-     * @returns 
+     * @param content The content of the issue file
+     * @param relativePath The relative path of the issue file
+     * @param fileName The name of the issue file
+     * @returns The prepared issue data
      */
-    processIssueFile (filePath: string): IIssueFile {
-        const directory = join(process.cwd(), this.command.argument('directory', 'issues'))
-        const content = fs.readFileSync(filePath, 'utf-8')
+    prepareIssue (content: string, relativePath: string, fileName: string): IIssueFile {
         const { metadata, body } = this.parseFrontmatter(content)
-
-        // Extract wave and issue number from path
-        const relativePath = path.relative(directory, filePath)
-        // const pathParts = relativePath.split(path.sep)
-        // const wave = pathParts[0] // e.g., 'wave-1'
-        const fileName = path.basename(filePath, '.md')
 
         // Parse labels
         let labels: string[] = []
@@ -241,6 +235,79 @@ export class IssuesSeeder {
             assignees: assignees,
             // wave: wave,
             fileName: fileName
+        }
+    }
+
+    /**
+     * Process a single issue file
+     * 
+     * @param filePath The path to the issue file
+     * @returns 
+     */
+    processIssueFile (filePath: string): IIssueFile {
+        const directory = join(process.cwd(), this.command.argument('path', 'issues'))
+        const content = fs.readFileSync(filePath, 'utf-8')
+
+        // Extract wave and issue number from path
+        const relativePath = path.relative(directory, filePath)
+        // const pathParts = relativePath.split(path.sep)
+        // const wave = pathParts[0] // e.g., 'wave-1'
+        const fileName = path.basename(filePath, '.md')
+
+        return this.prepareIssue(content, relativePath, fileName)
+    }
+
+    /**
+     * Process a markdown file containing multiple issues separated by '++++++' or '======' lines
+     * 
+     * @param filePath 
+     * @returns 
+     */
+    processMultiIssueMarkdown (filePath: string): IIssueFile[] {
+        try {
+            const content = fs.readFileSync(filePath, 'utf-8')
+
+            // Split on '++++++' or '======' that are on their own line, but ignore the first header
+            const rawIssues = content.split(/\n(\+{6}|={6})\n/).slice(1)
+            const issues: IIssueFile[] = []
+
+            for (const raw of rawIssues) {
+                // Extract title
+                const titleMatch = raw.match(/title: (.+)/)
+                if (!titleMatch) continue
+
+                // Remove all blank lines between frontmatter blocks (---\n[blank lines]\n---)
+                let cleaned = raw.replace(
+                    /^---\n([\s\S]*?)\n---/m,
+                    (_, content: string) => {
+                        const trimmed = content
+                            .split('\n')
+                            .filter(line => line.trim() !== '' || line.includes(':'))
+                            .join('\n')
+
+                        return `---\n${trimmed}\n---`
+                    }
+                )
+
+                // Convert labels: ['a', 'b', 'c'] to labels: a,b,c (preserve spaces within multiword labels)
+                cleaned = cleaned.replace(/labels:\s*\[(.*?)\]/g, (match, p1: string) => {
+                    // Split on comma, trim only leading/trailing spaces for each label, preserve inner spaces
+                    const labels = p1.split(',').map(s => s.replace(/['"]/g, '').trim()).filter(Boolean).join(',')
+
+                    return `labels: ${labels}`
+                })
+
+                const filepath = path.dirname(filePath)
+                const filename = path.basename(filePath)
+
+                issues.push(this.prepareIssue(cleaned.trimStart() + '\n', filepath, filename))
+            }
+
+            return issues
+        } catch (error: any) {
+            this.command.error(`ERROR: Failed to read markdown file: ${error.message}`)
+
+            return []
         }
     }
 
