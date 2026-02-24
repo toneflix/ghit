@@ -4,7 +4,7 @@ layout: home
 hero:
   name: Ghit
   text: GitHub CLI Reimagined
-  tagline: Command-line toolkit that blends hand-crafted workflows with OpenAPI-generated commands for GitHub.
+  tagline: A CLI tool for managing GitHub repositories, issues, and workflows from your terminal, combining custom workflows with full GitHub API coverage..
   image:
     src: /banner.png
     alt: Ghit

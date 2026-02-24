@@ -1,8 +1,8 @@
 {
     "name": "ghit",
     "type": "module",
-    "version": "0.1.9",
-    "description": "Command-line toolkit that blends hand-crafted workflows with OpenAPI-generated commands for GitHub.",
+    "version": "0.1.10",
+    "description": "A CLI tool for managing GitHub repositories, issues, and workflows from your terminal, combining custom workflows with full GitHub API coverage.",
     "main": "bin/cli.js",
     "private": false,
     "homepage": "https://ghit.toneflix.net",

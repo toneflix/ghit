@@ -1,6 +1,8 @@
 # What is Ghit?
 
-Ghit is a powerful command-line toolkit for GitHub that combines hand-crafted workflows with auto-generated commands from the GitHub OpenAPI specification.
+Ghit is a command-line tool that lets you manage GitHub repositories, issues, and workflows directly from your terminal. It combines custom, high-level commands for common tasks with auto-generated commands that cover the entire GitHub REST API, making bulk operations, automation, and version-controlled issue management easy and scriptable.
+
+Ghit is designed for developers who want to work faster, automate repetitive tasks, and keep their GitHub project management in sync with their codebase—all without leaving the command line.
 
 ## The Problem
 
