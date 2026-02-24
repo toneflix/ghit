@@ -81,7 +81,7 @@ ghit issues:seed ./issues --repo owner/repository
 ### With Single Markdown Issues File
 
 ```bash
-ghit issues:seed ./issues --file setup-ci-pipeline.md
+ghit issues:seed ./issues/multiple-issues.md
 ```
 
 When using a single file, each issue should be separated by `++++++` or `======` lines.
