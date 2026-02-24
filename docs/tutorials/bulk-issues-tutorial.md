@@ -16,7 +16,7 @@ This guide explains how to use AI-powered workflows to generate and seed GitHub 
 3. Run the following command to seed issues:
 
 ```bash
-pnpm cmd issues:seed issues/
+ghit issues:seed issues/
 ```
 
 **Example Directory Structure:**
