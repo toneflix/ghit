@@ -19,7 +19,9 @@ export class InfoCommand extends Command {
         const user = read<IUser>('user')
         const pkgPath = findCLIPackageJson()
         const require = createRequire(import.meta.url)
-        const defaultRepo = read('default_repo')?.full_name || null
+        const defaultRepo = read<any>('default_repo', undefined, {
+            bypassCurrentRepo: true
+        })?.full_name || null
         const currentRepo = detectCurrentGitRepo()
         const [_, setCommand] = useCommand()
         const [dbPath] = useDbPath()

@@ -157,10 +157,10 @@ export function getData () {
  * @param key 
  * @returns 
  */
-export function read<G = any> (key: string, defaultValue?: G): G {
+export function read<G = any> (key: string, defaultValue?: G, opts?: { [k: string]: any }): G {
     const db = getDatabase()
 
-    if (key === 'default_repo') {
+    if (key === 'default_repo' && !opts?.bypassCurrentRepo) {
         const [getConfig] = useConfig()
 
         const config = getConfig()
