@@ -1,9 +1,9 @@
 {
     "name": "ghit",
     "type": "module",
-    "version": "0.1.12",
+    "version": "0.1.13",
     "description": "A CLI tool for managing GitHub repositories, issues, and workflows from your terminal, combining custom workflows with full GitHub API coverage.",
-    "main": "bin/cli.js",
+    "main": "bin/cli.mjs",
     "private": false,
     "homepage": "https://ghit.toneflix.net",
     "repository": {
@@ -14,15 +14,14 @@
         "access": "public"
     },
     "bin": {
-        "ghit": "bin/cli.js"
+        "ghit": "bin/cli.mjs"
     },
     "exports": {
-        ".": "./bin/cli.js"
+        ".": "./bin/cli.mjs"
     },
     "files": [
         "bin",
-        "bin/cli.js",
-        "bin/cli.cjs"
+        "bin/cli.mjs"
     ],
     "keywords": [
         "ghit",

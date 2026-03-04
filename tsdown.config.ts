@@ -24,5 +24,10 @@ export default defineConfig({
         'os',
         'dotenv'
     ],
-    clean: true
+    clean: true,
+    outExtensions () {
+        return {
+            'js': '.mjs'
+        }
+    }
 }) 
