@@ -6,6 +6,7 @@ import { IUser } from 'src/Contracts/Interfaces'
 import { Logger } from '@h3ravel/shared'
 import Table from 'cli-table3'
 import { createRequire } from 'module'
+import { detectCurrentGitRepo } from 'src/github/repo-detect'
 import os from 'os'
 import path from 'path'
 import { useCommand } from 'src/hooks'
@@ -18,6 +19,8 @@ export class InfoCommand extends Command {
         const user = read<IUser>('user')
         const pkgPath = findCLIPackageJson()
         const require = createRequire(import.meta.url)
+        const defaultRepo = read('default_repo')?.full_name || null
+        const currentRepo = detectCurrentGitRepo()
         const [_, setCommand] = useCommand()
         const [dbPath] = useDbPath()
         setCommand(this)
@@ -43,7 +46,9 @@ export class InfoCommand extends Command {
                 { 'Memory': `${(os.freemem() / (1024 ** 3)).toFixed(2)} GB / ${(os.totalmem() / (1024 ** 3)).toFixed(2)} GB` },
                 { 'Database Path': path.join(dbPath, 'app.db') },
                 { 'Github User': user ? `${user.login} (ID: ${user.id})` : 'Not logged in' },
-                { 'Default Repo': read('default_repo')?.full_name || 'Not set' },
+                { 'Default Repo': (defaultRepo || 'Not set') + `${defaultRepo === currentRepo?.full_name ? ' (Current)' : ''}` },
+                { 'Current Repo': currentRepo ? `${currentRepo.full_name}` : 'Not detected' },
+                { 'Current Directory': process.cwd().replace(os.homedir(), '~') },
             )
 
             console.log(out.toString())
