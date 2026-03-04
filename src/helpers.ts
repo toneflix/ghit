@@ -157,23 +157,34 @@ export const parseAK = (ak: string): string => {
         .join('')
 }
 
-export const extractRepoInfo = (input: string): [string, string] => {
-    // Check if the input is a full URL
-    const urlMatch = input.match(/github\.com\/([^/]+)\/([^/]+)/)
-    if (urlMatch) {
-        return [urlMatch[1], urlMatch[2]]
-    }
+export const extractRepoInfo = (input?: string): [string, string] => {
+    if (input) {
+        // Check if the input is a full URL
+        const urlMatch = input.match(/github\.com\/([^/]+)\/([^/]+)/)
+        if (urlMatch) {
+            return [urlMatch[1], urlMatch[2]]
+        }
 
-    // Check if the input is in the format "owner/repo"
-    const parts = input.split('/')
-    if (parts.length === 2) {
-        return [parts[0], parts[1]]
+        // Check if the input is in the format "owner/repo"
+        const parts = input.split('/')
+        if (parts.length === 2) {
+            return [parts[0], parts[1]]
+        }
     }
 
     // If it's just "repo", we will assume the owner is the same as the default repo
     const defaultRepo = read<IRepoEntry>('default_repo')
 
-    return [defaultRepo.name, input]
+    if (defaultRepo?.full_name) {
+        const parts = defaultRepo.full_name.split('/')
+
+        if (parts.length === 2) {
+            return [parts[0], input ?? parts[1]]
+        }
+    }
+
+    throw new Error('Invalid repository format. Please provide a full URL, "owner/repo", or just "repo" with a default repository set.')
+
 }
 
 export const buildIssueFile = (issue: IIssue): IIssueFile => {

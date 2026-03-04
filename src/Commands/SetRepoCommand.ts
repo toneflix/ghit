@@ -8,7 +8,7 @@ import { extractRepoInfo } from 'src/helpers'
 export class SetRepoCommand extends Command {
     protected signature = `set-repo 
         { name? : The full name of the repository (e.g., username/repo)}
-        {--O|org : Set repository from an organization}
+        {--O|org? : Set repository from an organization}
     `
     protected description = 'Set the default repository.'
 
@@ -76,6 +76,8 @@ export class SetRepoCommand extends Command {
                 name: repo.name,
                 full_name: repo.full_name,
                 private: repo.private,
+                ssh_url: repo.ssh_url,
+                clone_url: repo.clone_url,
             })
             this.info(`INFO: ${Logger.log(repo.full_name, 'blue', !1)} has been set as the default repository.`).newLine()
         } else {

@@ -1,8 +1,10 @@
 import Database from 'better-sqlite3'
 import { XGeneric } from './Contracts/Generic'
+import { detectCurrentGitRepo } from './github/repo-detect'
 import { homedir } from 'os'
 import { mkdirSync } from 'fs'
 import path from 'path'
+import { useConfig } from './hooks'
 
 let db: Database.Database
 let dbPath = path.join(homedir(), '.ghit')
@@ -157,6 +159,14 @@ export function getData () {
  */
 export function read<G = any> (key: string, defaultValue?: G): G {
     const db = getDatabase()
+
+    if (key === 'default_repo') {
+        const [getConfig] = useConfig()
+
+        const config = getConfig()
+        const current = detectCurrentGitRepo()
+        if (current && config.useCurrentRepo) return current as G
+    }
 
     try {
         const row = db

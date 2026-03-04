@@ -21,6 +21,11 @@ export const configChoices = (config: IConfig) => {
             description: `Set the timeout duration for API requests (${config.timeoutDuration} ms)`
         },
         {
+            name: 'Use Current Repo for Commands',
+            value: 'useCurrentRepo',
+            description: `Enable or disable automatic detection of the current git repository for commands that support it (${config.useCurrentRepo ? 'Enabled' : 'Disabled'})`
+        },
+        {
             name: 'Skip Long Command Generation',
             value: 'skipLongCommandGeneration',
             description: `Enable or disable skipping of long command generation when calling ${logger('generate:apis', ['grey', 'italic'])} (${config.skipLongCommandGeneration ? 'Enabled' : 'Disabled'})`
@@ -44,10 +49,13 @@ export const saveConfig = async (choice: keyof IConfig) => {
     let config = getConfig()
 
     if (choice === 'debug') {
-        const debug = await command().confirm(
-            `${config.debug ? 'Dis' : 'En'}able debug mode?`, config.debug === true
-        )
-        config.debug = config.debug !== debug
+        const debug = await command()
+            .choice(
+                `Enable debug mode? (${config.debug ? 'Enabled' : 'Disabled'})`, [
+                { name: 'Enable', value: '1' },
+                { name: 'Disable', value: '0' }
+            ], config.debug ? 0 : 1)
+        config.debug = debug === '1'
     } else if (choice === 'apiBaseURL') {
         const apiBaseURL = await command().ask('Enter API Base URL', config.apiBaseURL)
         config.apiBaseURL = apiBaseURL
@@ -57,17 +65,29 @@ export const saveConfig = async (choice: keyof IConfig) => {
     } else if (choice === 'timeoutDuration') {
         const timeoutDuration = await command().ask('Enter Timeout Duration (in ms)', config.timeoutDuration.toString())
         config.timeoutDuration = parseInt(timeoutDuration)
+    } else if (choice === 'useCurrentRepo') {
+        const useCurrentRepo = await command()
+            .choice(
+                `Enable automatic detection of the current git repository for commands that support it? (${config.useCurrentRepo ? 'Enabled' : 'Disabled'})`, [
+                { name: 'Enable', value: '1' },
+                { name: 'Disable', value: '0' }
+            ], config.useCurrentRepo ? 0 : 1)
+        config.useCurrentRepo = useCurrentRepo === '1'
     } else if (choice === 'skipLongCommandGeneration') {
         const skipLongCommandGeneration = await command()
-            .confirm(
-                `${config.skipLongCommandGeneration ? 'Dis' : 'En'}able skipping of long command generation?`, config.skipLongCommandGeneration === true
-            )
-        config.skipLongCommandGeneration = skipLongCommandGeneration
+            .choice(
+                `Enable skipping of long command generation? (${config.skipLongCommandGeneration ? 'Enabled' : 'Disabled'})`, [
+                { name: 'Enable', value: '1' },
+                { name: 'Disable', value: '0' }
+            ], config.skipLongCommandGeneration ? 0 : 1)
+        config.skipLongCommandGeneration = skipLongCommandGeneration === '1'
     } else if (choice === 'reset') {
         config = {
             debug: false,
             apiBaseURL: 'https://api.github.com',
             timeoutDuration: 3000,
+            useCurrentRepo: true,
+            ngrokAuthToken: undefined,
             skipLongCommandGeneration: true,
         }
     }

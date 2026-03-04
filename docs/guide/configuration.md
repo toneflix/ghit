@@ -8,6 +8,7 @@ Ghit stores configuration includes:
 
 - Debug mode
 - API settings
+- Use current repository for commands
 - Default repository
 - Timeout preferences
 - Ngrok Auth Token
@@ -28,6 +29,7 @@ You'll see:
 ❯ Debug Mode
   API Base URL
   Timeout Duration
+  Use Current Repo for Commands
   Skip Long Command Generation
   Ngrok Auth Token
   Reset Configuration
@@ -38,7 +40,7 @@ Enable or disable debug mode (Disabled)
 
 ## Configuration Options
 
-### Debug Mode
+### Debug Mode `Default: Disabled`
 
 Enable detailed error messages and logging.
 
@@ -74,11 +76,9 @@ Stack trace:
   ...
 ```
 
-### API Base URL
+### API Base URL `Default: https://api.github.com`
 
 Set the GitHub API base URL.
-
-**Default:** `https://api.github.com`
 
 **Use cases:**
 
@@ -98,11 +98,9 @@ ghit config
 For GitHub.com, always use the default `https://api.github.com`.
 :::
 
-### Timeout Duration
+### Timeout Duration `Default: 3000`
 
 Set request timeout in milliseconds.
-
-**Default:** `3000` (3 seconds)
 
 **Recommended values:**
 
@@ -118,11 +116,34 @@ ghit config
 # Enter: 10000
 ```
 
-### Skip Long Command Generation
+### Use Current Repo for Commands
 
-Control whether to skip generating commands with many parameters.
+Automatically detect repository context from your current git workspace.
 
 **Default:** `Enabled`
+
+**When enabled:**
+
+- Ghit reads `remote.origin.url` from the current working directory
+- If detected, that repository is used as command context instead of `default_repo`
+- If git credentials exist for that remote, Ghit uses that token first for Octokit requests
+- If no workspace credential is found, Ghit falls back to your stored `ghit login` token
+
+**When disabled:**
+
+- Ghit uses `default_repo` from local storage unless `--owner` / `--repo` is provided
+
+**Example:**
+
+```bash
+ghit config
+# Select "Use Current Repo for Commands"
+# Toggle enabled/disabled
+```
+
+### Skip Long Command Generation `Default: Enabled`
+
+Control whether to skip generating commands with many parameters.
 
 **When enabled:**
 
@@ -144,7 +165,7 @@ ghit config
 # Toggle enabled/disabled
 ```
 
-### Ngrok Auth Token
+### Ngrok Auth Token `Default: Undefined`
 
 Set Ngrok authentication token for webhook testing.
 
@@ -177,6 +198,7 @@ This resets:
 - Debug mode → `false`
 - API Base URL → `https://api.github.com`
 - Timeout Duration → `3000`
+- Use Current Repo for Commands → `true`
 - Skip Long Command Generation → `true`
 - Ngrok Auth Token → `undefined`
 
@@ -218,6 +240,10 @@ ghit issues:create --title "Bug" --owner toneflix --repo ghit
 # After (with default)
 ghit issues:create --title "Bug"
 ```
+
+::: tip
+If `Use Current Repo for Commands` is enabled and you run commands inside a git repository, that workspace repository takes precedence over `default_repo`.
+:::
 
 ### Change Default Repository
 

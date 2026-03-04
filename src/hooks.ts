@@ -3,6 +3,7 @@ import { read, write } from './db'
 import { Command } from '@h3ravel/musket'
 import { IConfig } from './Contracts/Interfaces'
 import { Octokit } from '@octokit/rest'
+import { getGitCredentialForCurrentRepo } from './github/repo-detect'
 
 let commandInstance: Command | undefined
 
@@ -36,6 +37,8 @@ export function useConfig () {
                 debug: false,
                 apiBaseURL: 'https://api.github.com',
                 timeoutDuration: 3000,
+                useCurrentRepo: true,
+                ngrokAuthToken: undefined,
                 skipLongCommandGeneration: true,
             }
         },
@@ -80,7 +83,20 @@ export function useShortcuts () {
  * @returns 
  */
 export const useOctokit = () => {
-    const token = read<string>('token')
+    let token: string | undefined
+    const [getConfig] = useConfig()
+    const config = getConfig()
+
+    if (config.useCurrentRepo) {
+        const credential = getGitCredentialForCurrentRepo()
+        if (credential && credential.password) {
+            token = credential.password
+        }
+    }
+
+    if (!token) {
+        token = read<string>('token')
+    }
 
     if (!token) {
         throw new Error('No authentication token found. Please log in first.')

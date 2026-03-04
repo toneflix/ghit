@@ -18,6 +18,8 @@ export class ConfigCommand extends Command {
                 debug: false,
                 apiBaseURL: 'https://api.github.com',
                 timeoutDuration: 3000,
+                useCurrentRepo: true,
+                ngrokAuthToken: undefined,
                 skipLongCommandGeneration: true,
             }
             setConfig(config)

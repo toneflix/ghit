@@ -30,6 +30,7 @@ export interface IIssueFile {
 export interface IConfig {
     debug: boolean
     apiBaseURL: string
+    useCurrentRepo: boolean
     timeoutDuration: number
     ngrokAuthToken?: string
     skipLongCommandGeneration?: boolean
@@ -40,6 +41,8 @@ export interface IRepoEntry {
     name: string
     full_name: string
     private: boolean
+    ssh_url: string
+    clone_url: string
 }
 
 export interface IUser {

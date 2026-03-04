@@ -1,5 +1,5 @@
 # Ghit
- 
+
 [![NPM Downloads](https://img.shields.io/npm/dt/ghit.svg)](https://www.npmjs.com/package/ghit)
 [![npm version](https://img.shields.io/npm/v/ghit.svg)](https://www.npmjs.com/package/ghit)
 [![License](https://img.shields.io/npm/l/ghit.svg)](https://github.com/toneflix/ghit/blob/main/LICENSE)
@@ -19,9 +19,17 @@ pnpm add -g ghit
 
 - Login: `ghit login` (opens browser flow, stores token locally)
 - Set default repo: `ghit set-repo owner/name`
+- Optional: enable `Use Current Repo for Commands` in `ghit config` to auto-detect repo from your current git workspace
 - Inspect info: `ghit info`
 - Work with issues (interactive): `ghit issues` to list, view, close/reopen, edit, or delete
 - Seed/update/delete issues in bulk: `ghit issues:seed`, `ghit issues:update`, `ghit issues:delete`
+
+## Auth and repo resolution
+
+- When `Use Current Repo for Commands` is enabled, Ghit resolves the active repository from `remote.origin.url` in your current workspace.
+- If Git credentials are already available for that repo (via your git credential helper), Ghit reuses that token for API calls.
+- If no workspace credential is available, Ghit falls back to the token saved by `ghit login`.
+- If workspace detection is disabled or no git repo is found, Ghit uses the configured `default_repo`.
 
 ## Generated API commands (dynamic)
 

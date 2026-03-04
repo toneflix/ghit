@@ -38,6 +38,8 @@ This will:
 - Request necessary permissions
 - Store your token securely in `~/.ghit/db.sqlite`
 
+If your current workspace already has GitHub credentials available through your git credential helper, Ghit can reuse that token automatically (when `Use Current Repo for Commands` is enabled in `ghit config`).
+
 ### 2. Set a Default Repository
 
 Set a default repository to avoid typing owner/repo on every command:
@@ -51,6 +53,8 @@ For example:
 ```bash
 ghit set-repo toneflix/ghit
 ```
+
+When `Use Current Repo for Commands` is enabled (default), commands run inside a git repository will use that workspace repo first.
 
 ### 3. Verify Your Setup
 
@@ -160,6 +164,7 @@ Available options:
 
 - `debug` — Enable detailed error messages
 - `token` — Your GitHub personal access token
+- `useCurrentRepo` — Auto-detect repository from current workspace and prefer git credential token when available
 - `default_repo` — Default repository context
 
 ## Next Steps
