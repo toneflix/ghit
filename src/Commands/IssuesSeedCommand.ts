@@ -34,12 +34,12 @@ export class IssuesSeedCommand extends Command {
         const seeder = new IssuesSeeder()
 
         try {
-            const usernameRepo = (this.option('repo', repo.full_name).split('/') ?? ['', '']) as [string, string]
+            const parsedRepo = (this.option('repo', repo.full_name).split('/') ?? ['', '']) as [string, string]
             // Check network connectivity first
             await seeder.checkConnectivity()
 
             // Validate GitHub access
-            await seeder.validateAccess(...usernameRepo)
+            await seeder.validateAccess(...parsedRepo)
 
             // Check if issuesPath exists
             if (!existsSync(issuesPath)) {
@@ -48,7 +48,7 @@ export class IssuesSeedCommand extends Command {
 
             let issues: IIssueFile[] = []
             let existingIssuePaths: Set<string> = new Set()
-            const existingIssues = await seeder.fetchExistingIssues(...usernameRepo, 'all')
+            const existingIssues = await seeder.fetchExistingIssues(...parsedRepo, 'all')
 
             // Check if the path is a markdown file or a directory
             if (issuesPath.endsWith('.md')) {
@@ -114,7 +114,7 @@ export class IssuesSeedCommand extends Command {
                 [' CONFIRM ', 'bgYellow'],
                 ['This will create', 'yellow'],
                 [toCreate.length.toString(), 'blue'],
-                ['new issues on GitHub.', 'yellow']
+                [`new issues on the "${parsedRepo.join('/')}" GitHub repository.`, 'yellow']
             ], ' ')
 
             if (toSkip.length > 0) {
@@ -136,7 +136,7 @@ export class IssuesSeedCommand extends Command {
                     try {
                         spinner.start(`Creating: ${issue.title}...`)
                         if (!isDryRun) {
-                            const result = await seeder.createIssue(issue, ...usernameRepo)
+                            const result = await seeder.createIssue(issue, ...parsedRepo)
                             spinner.succeed(`Created #${result.number}: ${result.title}`)
                             this.info(`URL: ${result.html_url}\n`)
                         } else {

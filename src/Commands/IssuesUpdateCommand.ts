@@ -36,12 +36,12 @@ export class IssuesUpdateCommand extends Command {
         const seeder = new IssuesSeeder()
 
         try {
-            const usernameRepo = (this.option('repo', repo.full_name).split('/') ?? ['', '']) as [string, string]
+            const parsedRepo = (this.option('repo', repo.full_name).split('/') ?? ['', '']) as [string, string]
             // Check network connectivity first
             await seeder.checkConnectivity()
 
             // Validate GitHub access
-            await seeder.validateAccess(...usernameRepo)
+            await seeder.validateAccess(...parsedRepo)
 
             // Check if issues path exists
             if (!existsSync(issuesPath)) {
@@ -49,7 +49,7 @@ export class IssuesUpdateCommand extends Command {
             }
 
             let issues: IIssueFile[] = []
-            const existingIssues = await seeder.fetchExistingIssues(...usernameRepo, 'all')
+            const existingIssues = await seeder.fetchExistingIssues(...parsedRepo, 'all')
 
             // Determine matching strategy
             const matchStrategy = this.option('match', 'file')
@@ -138,7 +138,7 @@ export class IssuesUpdateCommand extends Command {
                     try {
                         spinner.start(`Updating: ${issue.title}...`)
                         if (!isDryRun) {
-                            const result = await seeder.updateIssue(issue, existingIssue, ...usernameRepo)
+                            const result = await seeder.updateIssue(issue, existingIssue, ...parsedRepo)
                             spinner.succeed(`Updated #${result.number}: ${result.title}`)
                             this.info(`URL: ${result.html_url}\n`)
                         } else {
