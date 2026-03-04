@@ -267,11 +267,14 @@ export class IssuesSeeder {
         try {
             const content = fs.readFileSync(filePath, 'utf-8')
 
-            // Split on '++++++' or '======' that are on their own line, but ignore the first header
-            const rawIssues = content.split(/\n(\+{6}|={6})\n/).slice(1)
+            // Split on '++++++' or '======' that are on their own line
+            const rawIssues = content.split(/\n(\+{6}|={6})\n/)
             const issues: IIssueFile[] = []
 
             for (const raw of rawIssues) {
+                // Skip empty or whitespace-only segments
+                if (!raw || !raw.trim()) continue
+
                 // Extract title
                 const titleMatch = raw.match(/title: (.+)/)
                 if (!titleMatch) continue
