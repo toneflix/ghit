@@ -44,12 +44,13 @@
         "dummy": "node ./tests/test.sever.js",
         "version": "pnpm run build",
         "unlink": "pnpm uninstall --global ghit",
-        "release": "pnpm build && pnpm changeset version && pnpm changeset publish",
-        "publish-it": "pnpm build && pnpm publish --tag latest",
+        "release": "pnpm changeset version && pnpm changeset publish",
+        "publish-it": "pnpm publish --tag latest",
         "docs:dev": "vitepress dev docs",
         "docs:build": "vitepress build docs",
         "docs:preview": "vitepress preview docs",
-        "preuninstall": "node ./uninstall.js"
+        "preuninstall": "node ./uninstall.js",
+        "prepublishOnly": "pnpm build"
     },
     "dependencies": {
         "@antfu/install-pkg": "^1.1.0",
